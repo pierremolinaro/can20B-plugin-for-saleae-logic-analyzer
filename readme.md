@@ -1,38 +1,90 @@
-# Saleae Analyzer SDK Sample Analyzer
-The Saleae Analyzer SDK is used to create custom plugins for the Saleae Logic software. These plugins are used to decode protocol data from captured waveforms.
+# CAN 2.0B (Molinaro): Controller Area Network (CAN) Analyzer for Saleae logic Analyzers
 
-The libraries required to build a custom analyzer are stored in another git repository, located here:
-[https://github.com/saleae/AnalyzerSDK](https://github.com/saleae/AnalyzerSDK)
+This is a plugin for Saleae logic Analyzers, built with Saleae Analyzer SDK.
 
-This repository should be used to create new analyzers for the Saleae software.
+## Building the plugin
 
-First, fork, clone or download this repository. Forking is recommended if you plan to use version control or share your custom analyzer publicly.
+For building the plugin, see [https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build] (https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build) 
 
-Note - This repository contains a submodule. Be sure to include submodules when cloning, for example `git clone --recursive https://github.com/saleae/SampleAnalyzer.git`. If you download the repository from Github, the submodules are not included. In that case you will also need to download the AnalyzerSDK repository linked above and place the AnalyzerSDK folder inside of the SampleAnalyzer folder.
+For installing the plugin, see [https://support.saleae.com/faq/technical-faq/setting-up-developer-directory](https://support.saleae.com/faq/technical-faq/setting-up-developer-directory)
 
-*Note: an additional submodule is used for debugging on Windows, see section on Windows debugging for more information.*
+## Selecting Analyzer
 
-Once downloaded, first run the script rename_analyzer.py. This script is used to rename the sample analyzer automatically. Specifically, it changes the class names in the source code, it changes the text name that will be displayed once the custom analyzer has been loaded into the Saleae Logic software, and it updates the visual studio project.
+The analyzer Name is `CAN 2.0B (Molinaro)`.
 
-There are two names you need to provide to rename_analyzer. The first is the class name. For instance, if you are developing a SPI analyzer, the class names would be SPIAnalyzer, SPIAnalyzerResults, SPIAnalyzerSettings, etc.
-The file names would be similar, like SPIAnalyzer.cpp, etc.
+![Setting Dialog](readme-images/selecting-analyzer.png)
 
-All analyzer classes should end with "Analyzer," so the rename script will add that for you. In the first prompt after starting the script, enter "SPI". The analyzer suffix will be added for you. This needs to be a valid C++ class name - no spaces, it can't start with a number, etc.
+## Plugin settings
 
-Second, the script will prompt you for the display name. This will appear in the software in the list of analyzers after the plugin has loaded. This string can have spaces, since it will always be treated as a string, and not as the name of a class.
 
-After that, the script will complete the renaming process and exit.
+![Setting Dialog](readme-images/setting-dialog.png)
 
-    python rename_analyzer.py
-    SPI
-    Mark's SPI Analyzer
+### CAN Bit Rate
 
-To build on Windows, open the visual studio project in the Visual Studio folder, and build. The Visual Studio solution has configurations for 32 bit and 64 bit builds. You will likely need to switch the configuration to 64 bit and build that in order to get the analyzer to load in the Windows software.
+Usual CAN bit rates settings are `1000000` (1 Mbit/s), `500000` (500 kbit/s), `250000` (250 kbit/s), `125000` (125 kbit/s), `62500` (62.5 kbit/s). But you can use any custom setting (maximum is 1 Mbit/s).
 
-To build on Linux or OSX, run the build_analyzer.py script. The compiled libraries can be found in the newly created debug and release folders.
+### Dominant Logic Level
 
-	python build_analyzer.py
+Usually, CAN Dominant level is `LOW` logic level. This setting enables selecting `HIGH` as dominant level. 
 
-To debug on Windows, please first review the section titled `Debugging an Analyzer with Visual Studio` in the included `doc/Analyzer SDK Setup.md` document.
+### Simulator ACK SLOT generated level
 
-Unfortunately, debugging is limited on Windows to using an older copy of the Saleae Logic software that does not support the latest hardware devices. Details are included in the above document.
+*This setting is only used be the simulator. The simulator is enabled when no device is connected the analyzer.*
+
+The `ACK SLOT` field of a CAN 2.0B frame is sent recessive, and set dominant by any receiver that gets the frame without any error.
+
+Three settings are available:
+
+* `Dominant`: the simulator generates frames with the ACK SLOT bit dominant;
+* `Recessive`: the simulator generates frames with the ACK SLOT bit recessive;
+* `Random`: the simulator generates frames with the ACK SLOT bit randomly dominant or recessive.
+
+### Simulator Generated Frames
+
+*This setting is only used be the simulator. The simulator is enabled when no device is connected the analyzer.*
+
+You can set the format (standard / extended) and the the type (data / remote) that the simulator generates:
+
+* `All Types`: the simulator randomly generates standard / extended, data / remote frames;
+* `Only Standard Data Frames`: the simulator randomly generates standard data frames;
+* `Only Extended Data Frames`: the simulator randomly generates extended data frames;
+* `Only Standard Remote Frames`: the simulator randomly generates standard remote frames;
+* `Only Extended Remote Frames`: the simulator randomly generates extended remote frames.
+
+##Capture Display
+
+This is the capture of a Standard data frame, identifier `0x7B1`, one data byte (`0xF1`), with `ACK SLOT` dominant.
+
+![](readme-images/capture-left.png)
+![](readme-images/capture-center.png)
+![](readme-images/capture-right.png)
+
+By default, the center of a bit is indicated with a white dot.
+
+The green dot is the `SOF` (*Start Of Frame*) field.
+
+A white `X` is a Stuff Bit.
+
+A fixed form bit is denoted by a `0` (for a dominant bit) or a `1` (recessive bit). *Note the level inversion does not change the annotation.* 
+
+The `RTR` and the `SRR` bits are denoted by an `up arrow` (if recessive), or a `down arrow` (if dominant).
+
+Errors are in red color: a red `X` is a Stuff Error, and following bits are tagget with red dots until the bus returns free (11 consecutive recessive bits).
+
+## Bubble Text
+
+The bubble text is the text over the capture.
+
+All CAN frames fields are reported, but:
+
+* the `SOF` field that is denoted by a green dot.
+* the `CRC DEL` field, a fixed form recessive bit after the `CRC` field.
+
+If a CRC error is detected, the text is `CRC: xxx (error)`.
+ 
+## Tabular Text
+
+The tabular text contains only the identifier and the data bytes (and the CRC field, if there is a CRC error).
+
+![](readme-images/tabular-text.png)
+
