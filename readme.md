@@ -84,7 +84,12 @@ If a CRC error is detected, the text is `CRC: xxx (error)`.
  
 ## Tabular Text
 
-The tabular text contains only the identifier and the data bytes (and the CRC field, if there is a CRC error).
+For each frame, the tabular text contains:
+
+* the identifier;
+* the data bytes;
+* if there is a CRC error, the CRC field;
+* the frame bit length, its duration, and the number of stuff bits.
 
 ![](readme-images/tabular-text.png)
 
