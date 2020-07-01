@@ -8,17 +8,16 @@
 
 //--------------------------------------------------------------------------------------------------
 
-CANMolinaroAnalyzerResults::CANMolinaroAnalyzerResults( CANMolinaroAnalyzer* analyzer, CANMolinaroAnalyzerSettings* settings )
-:  AnalyzerResults(),
-  mSettings( settings ),
-  mAnalyzer( analyzer )
-{
+CANMolinaroAnalyzerResults::CANMolinaroAnalyzerResults (CANMolinaroAnalyzer* analyzer,
+                                                        CANMolinaroAnalyzerSettings* settings) :
+AnalyzerResults (),
+mSettings (settings),
+mAnalyzer (analyzer) {
 }
 
 //--------------------------------------------------------------------------------------------------
 
-CANMolinaroAnalyzerResults::~CANMolinaroAnalyzerResults()
-{
+CANMolinaroAnalyzerResults::~CANMolinaroAnalyzerResults (void) {
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -46,11 +45,17 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     break ;
   case DATA_FIELD_RESULT :
     AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);
+    if (!inBubbleText) {
+      ioText << "  " ;
+    }
     ioText << "Data " << inFrame.mData2 << ": " << numberString ;
     break ;
   case CRC_FIELD_RESULT : // Data1: CRC, Data2: is 0 if CRC ok
     AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 16, numberString, 128);
     if (inFrame.mData2 != 0) {
+      if (!inBubbleText) {
+        ioText << "  " ;
+      }
       ioText << "CRC: " << numberString << " (error)" ;
     }else if (inBubbleText) {
       ioText << "CRC: " << numberString ;
@@ -69,6 +74,15 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
   case INTERMISSION_FIELD_RESULT :
     if (inBubbleText) {
       ioText << "IFS" ;
+    }else{
+      const U64 frameSampleCount = inFrame.mData1 ;
+      const U32 sampleRateHz = mAnalyzer->sampleRateHz () ;
+      const U32 bitRate = mAnalyzer->bitRate () ;
+      const U32 samplesPerBit = sampleRateHz / bitRate ;
+      ioText << "  Length: " << ((frameSampleCount + samplesPerBit / 2) / samplesPerBit) << " bits ("
+             << (frameSampleCount * 1000000 / sampleRateHz) << " µs), "
+             << inFrame.mData2 << " stuff bits" ;
+      // ioText << " (" << sampleRateHz << ", " << bitRate << ")" ;
     }
     break ;
   default :
@@ -80,7 +94,7 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
 //--------------------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateBubbleText (const U64 inFrameIndex,
-                                                     Channel& channel,
+                                                     Channel & channel,
                                                      const DisplayBase inDisplayBase) {
   const Frame frame = GetFrame (inFrameIndex) ;
   std::stringstream text ;

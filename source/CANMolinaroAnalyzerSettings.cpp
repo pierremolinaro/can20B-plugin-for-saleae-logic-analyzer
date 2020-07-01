@@ -3,17 +3,25 @@
 
 //--------------------------------------------------------------------------------------------------
 
-CANMolinaroAnalyzerSettings::CANMolinaroAnalyzerSettings() :
+CANMolinaroAnalyzerSettings::CANMolinaroAnalyzerSettings (void) :
 mInputChannel (UNDEFINED_CHANNEL),
-mBitRate (125 * 1000) {
+mBitRate (125 * 1000),
+mInputChannelInterface (),
+mBitRateInterface (),
+mCanChannelInvertedInterface (),
+mSimulatorAckGenerationInterface (),
+mSimulatorFrameTypeGenerationInterface (),
+mSimulatorGeneratedAckSlot (GENERATE_ACK_DOMINANT),
+mSimulatorGeneratedFrameType (GENERATE_ALL_FRAME_TYPES),
+mInverted (false) {
 	mInputChannelInterface.reset (new AnalyzerSettingInterfaceChannel ());
-	mInputChannelInterface->SetTitleAndTooltip ("Serial", "Standard Molinaro's CAN");
+	mInputChannelInterface->SetTitleAndTooltip ("Serial", "CAN 2.0B");
 	mInputChannelInterface->SetChannel (mInputChannel);
 
 	mBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
 	mBitRateInterface->SetTitleAndTooltip ("CAN Bit Rate (bit/s)",
                                          "Specify the CAN bit rate in bits per second." );
-	mBitRateInterface->SetMax (25 * 1000 * 1000) ;
+	mBitRateInterface->SetMax (1 * 1000 * 1000) ;
 	mBitRateInterface->SetMin (1) ;
 	mBitRateInterface->SetInteger (mBitRate) ;
 

@@ -13,7 +13,6 @@ class CANMolinaroAnalyzerSettings;
 
 //--------------------------------------------------------------------------------------------------
 
-
 class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
 
   public: CANMolinaroAnalyzer();
@@ -50,6 +49,9 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
 	protected: U32 mStartOfStopBitOffset;
 	protected: U32 mEndOfStopBitOffset;
 
+  public: inline U32 sampleRateHz (void) const { return mSampleRateHz ;  }
+  public: U32 bitRate (void) const ;
+
 //---------------- CAN decoder properties
 //--- CAN protocol
   private: typedef enum  {
@@ -63,17 +65,24 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
   private: bool mPreviousBit ;
   private: bool mUnstuffingActive ;
 
+  private: U64 mStartOfFrameSampleNumber ;
+  private: U64 mStuffBitCount ;
   private: U64 mStartOfFieldSampleNumber ;
   private: U16 mCRCAccumulator ;
-  private: void enterBitInCRC (const bool inBit) ;
 
 //--- Received frame
-  private: typedef enum {data, remote} FrameType ;
+  private: typedef enum {dataFrame, remoteFrame} FrameType ;
   private: uint32_t mIdentifier ;
   private: FrameType mFrameType ; // data, remote
   private: int mDataLength ;
   private: uint8_t mData [8] ;
   private: uint16_t mCRC ;
+
+//---------------- CAN decoder methods
+  private: void enterBitInCRC (const bool inBit) ;
+  private: void addMark (const U64 inSampleNumber, const AnalyzerResults::MarkerType inMarker) ;
+  private: void addBubble (const U8 inBubbleType, const U64 inData1, const U64 inData2, const U64 inEndSampleNumber) ;
+  private: void enterInErrorMode (const U64 inSampleNumber) ;
 } ;
 
 //--------------------------------------------------------------------------------------------------

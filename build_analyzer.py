@@ -7,7 +7,7 @@ if platform.system().lower() == "darwin":
     dylib_ext = ".dylib"
 else:
     dylib_ext = ".so"
-    
+
 print("Running on " + platform.system())
 
 #make sure the release folder exists, and clean out any .o/.so file if there are any
@@ -44,7 +44,7 @@ link_paths = [ "./AnalyzerSDK/lib" ]
 link_dependencies = [ "-lAnalyzer" ] #refers to libAnalyzer.dylib or libAnalyzer.so
 
 debug_compile_flags = "-O0 -w -c -fpic -g"
-release_compile_flags = "-O3 -w -c -fpic"
+release_compile_flags = "-O3 -Wall -c -fpic"
 
 def run_command(cmd):
     "Display cmd, then run it in a subshell, raise if there's an error"
@@ -59,7 +59,7 @@ for cpp_file in cpp_files:
     command = "g++ "
 
     #include paths
-    for path in include_paths: 
+    for path in include_paths:
         command += "-I\"" + path + "\" "
 
     release_command = command
@@ -75,7 +75,7 @@ for cpp_file in cpp_files:
     #run the commands from the command line
     run_command(release_command)
     run_command(debug_command)
-    
+
 #lastly, link
 #g++
 command = "g++ "
@@ -114,7 +114,7 @@ else:
 for cpp_file in cpp_files:
     release_command += "release/" + cpp_file.replace( ".cpp", ".o" ) + " "
     debug_command += "debug/" + cpp_file.replace( ".cpp", ".o" ) + " "
-    
+
 #run the commands from the command line
 run_command(release_command)
 run_command(debug_command)

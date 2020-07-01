@@ -9,19 +9,15 @@
 //  CAN FRAME GENERATOR
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {standard, extended} FrameFormat ;
+typedef enum {standardFrame, extendedFrame} FrameFormat ;
 
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {data, remote} FrameType ;
+typedef enum {dataFrame, remoteFrame} FrameType ;
 
 //--------------------------------------------------------------------------------------------------
 
 typedef enum {ACK_SLOT_DOMINANT, ACK_SLOT_RECESSIVE} AckSlot ;
-
-//--------------------------------------------------------------------------------------------------
-
-static const uint32_t CAN_FRAME_MAX_LENGTH = 160 ;
 
 //--------------------------------------------------------------------------------------------------
 
@@ -47,9 +43,9 @@ class CANFrameBitsGenerator {
   private: uint8_t mFrameLength ;
 
 //--- CRC computation
-  private : uint32_t mConsecutiveBitCount = 1 ;
-  private : bool mLastBitValue = true ;
-  private : uint16_t mCRCAccumulator = 0 ;
+  private : uint32_t mConsecutiveBitCount ;
+  private : bool mLastBitValue ;
+  private : uint16_t mCRCAccumulator ;
 } ;
 
 //--------------------------------------------------------------------------------------------------
@@ -61,7 +57,10 @@ CANFrameBitsGenerator::CANFrameBitsGenerator (const uint32_t inIdentifier,
                                               const FrameType inFrameType,
                                               const AckSlot inAckSlot) :
 mBits (),
-mFrameLength (0) {
+mFrameLength (0),
+mConsecutiveBitCount (1),
+mLastBitValue (true),
+mCRCAccumulator (0) {
   for (uint32_t i=0 ; i<5 ; i++) {
     mBits [i] = UINT32_MAX ;
   }
@@ -69,7 +68,7 @@ mFrameLength (0) {
 //--- Generate frame
   enterBitAppendStuff (false) ; // SOF
   switch (inFrameFormat) {
-  case FrameFormat::extended :
+  case extendedFrame :
     for (uint8_t idx = 28 ; idx >= 18 ; idx--) { // Identifier
       const bool bit = (inIdentifier & (1 << idx)) != 0 ;
       enterBitAppendStuff (bit) ;
@@ -81,14 +80,14 @@ mFrameLength (0) {
       enterBitAppendStuff (bit) ;
     }
     break ;
-  case FrameFormat::standard :
+  case standardFrame :
     for (int idx = 10 ; idx >= 0 ; idx--) { // Identifier
       const bool bit = (inIdentifier & (1 << idx)) != 0 ;
       enterBitAppendStuff (bit) ;
     }
     break ;
   }
-  enterBitAppendStuff (inFrameType == FrameType::remote) ; // RTR
+  enterBitAppendStuff (inFrameType == remoteFrame) ; // RTR
   enterBitAppendStuff (false) ; // RESERVED 1
   enterBitAppendStuff (false) ; // RESERVED 0
   enterBitAppendStuff ((dataLength & 8) != 0) ; // DLC 3
@@ -96,7 +95,7 @@ mFrameLength (0) {
   enterBitAppendStuff ((dataLength & 2) != 0) ; // DLC 1
   enterBitAppendStuff ((dataLength & 1) != 0) ; // DLC 0
 //--- Enter DATA
-  if (inFrameType == FrameType::data) {
+  if (inFrameType == dataFrame) {
     const uint8_t maxLength = (dataLength > 8) ? 8 : dataLength ;
     for (uint8_t dataIdx = 0 ; dataIdx < maxLength ; dataIdx ++) {
       for (int bitIdx = 7 ; bitIdx >= 0 ; bitIdx--) {
@@ -113,10 +112,10 @@ mFrameLength (0) {
 //--- Enter ACK, EOF, INTERMISSION
   enterBitNoStuff (true) ; // CRC DEL
   switch (inAckSlot) {
-  case AckSlot::ACK_SLOT_DOMINANT :
+  case ACK_SLOT_DOMINANT :
     enterBitNoStuff (false) ;
     break ;
-  case AckSlot::ACK_SLOT_RECESSIVE :
+  case ACK_SLOT_RECESSIVE :
     enterBitNoStuff (true) ;
     break ;
   }
@@ -236,11 +235,11 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
   const SimulatorGeneratedFrameType frameTypes = mSettings->generatedFrameType () ;
 //--- Generate random Frame
   bool extended = false ;
-  bool remoteFrame = false ;
+  bool remote = false ;
   switch (frameTypes) {
   case GENERATE_ALL_FRAME_TYPES :
     extended = (random () & 1) != 0 ;
-    remoteFrame = (random () & 1) != 0 ;
+    remote = (random () & 1) != 0 ;
     break ;
   case GENERATE_ONLY_STANDARD_DATA :
     break ;
@@ -248,16 +247,16 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     extended = true ;
     break ;
   case GENERATE_ONLY_STANDARD_REMOTE :
-    remoteFrame = true ;
+    remote = true ;
     break ;
   case GENERATE_ONLY_EXTENDED_REMOTE :
     extended = true ;
-    remoteFrame = true ;
+    remote = true ;
     break ;
   }
   uint8_t data [8] ;
-  const FrameFormat format = extended ? FrameFormat::extended : FrameFormat::standard ;
-  const FrameType type = remoteFrame ? FrameType::remote : FrameType::data ;
+  const FrameFormat format = extended ? extendedFrame : standardFrame ;
+  const FrameType type = remote ? remoteFrame : dataFrame ;
   const uint32_t identifier = uint32_t (random ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
   const uint8_t dataLength = uint8_t (random ()) % 9 ;
   if (! remoteFrame) {
@@ -265,15 +264,15 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
       data [i] = uint8_t (random ()) ;
     }
   }
-  AckSlot ack = AckSlot::ACK_SLOT_DOMINANT ;
+  AckSlot ack = ACK_SLOT_DOMINANT ;
   switch (mSettings->generatedAckSlot ()) {
   case GENERATE_ACK_DOMINANT :
     break ;
   case GENERATE_ACK_RECESSIVE :
-    ack = AckSlot::ACK_SLOT_RECESSIVE ;
+    ack = ACK_SLOT_RECESSIVE ;
     break ;
-  GENERATE_ACK_RANDOMLY :
-    ack = ((random () & 1) != 0) ? AckSlot::ACK_SLOT_DOMINANT : AckSlot::ACK_SLOT_RECESSIVE ;
+  case GENERATE_ACK_RANDOMLY :
+    ack = ((random () & 1) != 0) ? ACK_SLOT_DOMINANT : ACK_SLOT_RECESSIVE ;
     break ;
   }
   const CANFrameBitsGenerator frame (identifier, format, dataLength, data, type, ack) ;

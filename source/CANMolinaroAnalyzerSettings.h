@@ -27,18 +27,18 @@ typedef enum {
 //--------------------------------------------------------------------------------------------------
 
 class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
-public:
-  CANMolinaroAnalyzerSettings();
-  virtual ~CANMolinaroAnalyzerSettings();
 
-  virtual bool SetSettingsFromInterfaces();
-  void UpdateInterfacesFromSettings();
-  virtual void LoadSettings( const char* settings );
-  virtual const char* SaveSettings();
+  public: CANMolinaroAnalyzerSettings (void);
+  public: virtual ~CANMolinaroAnalyzerSettings();
+
+  public: virtual bool SetSettingsFromInterfaces();
+  public: void UpdateInterfacesFromSettings();
+  public: virtual void LoadSettings( const char* settings );
+  public: virtual const char* SaveSettings();
 
 
-  Channel mInputChannel;
-  U32 mBitRate;
+  public: Channel mInputChannel;
+  public: U32 mBitRate;
 
   public: bool inverted (void) const { return mInverted ; }
 
@@ -50,16 +50,15 @@ public:
    return mSimulatorGeneratedFrameType ;
   }
 
-protected:
-  std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
-  std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
 
-  SimulatorGeneratedAckSlot mSimulatorGeneratedAckSlot = GENERATE_ACK_DOMINANT ;
-  SimulatorGeneratedFrameType mSimulatorGeneratedFrameType = GENERATE_ALL_FRAME_TYPES ;
-  bool mInverted = false ;
+  protected: SimulatorGeneratedAckSlot mSimulatorGeneratedAckSlot ;
+  protected: SimulatorGeneratedFrameType mSimulatorGeneratedFrameType ;
+  protected: bool mInverted ;
 };
 
 //--------------------------------------------------------------------------------------------------
