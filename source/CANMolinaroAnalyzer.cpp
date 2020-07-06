@@ -290,7 +290,6 @@ void CANMolinaroAnalyzer::decodeFrameBit (const bool inBit, const U64 inSampleNu
       }else{
         enterInErrorMode (inSampleNumber) ;
       }
-      addMark (inSampleNumber, inBit ? AnalyzerResults::One : AnalyzerResults::ErrorX) ;
       addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
       mFieldBitIndex = 0 ;
       mFrameFieldEngineState = ENDOFFRAME ;

@@ -81,8 +81,8 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
       const U32 samplesPerBit = sampleRateHz / bitRate ;
       ioText << "  Length: " << ((frameSampleCount + samplesPerBit / 2) / samplesPerBit) << " bits ("
              << (frameSampleCount * 1000000 / sampleRateHz) << " µs), "
-             << inFrame.mData2 << " stuff bits" ;
-      // ioText << " (" << sampleRateHz << ", " << bitRate << ")" ;
+             << inFrame.mData2 << " stuff bit"
+             << ((inFrame.mData2 > 1) ? "s" : "") ;
     }
     break ;
   default :
