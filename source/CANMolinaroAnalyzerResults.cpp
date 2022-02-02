@@ -26,67 +26,82 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
                                                const DisplayBase inDisplayBase,
                                                const bool inBubbleText,
                                                std::stringstream & ioText) {
+  const U32 sampleRateHz = mAnalyzer->sampleRateHz () ;
+  const U32 bitRate = mAnalyzer->bitRate () ;
+  const U32 samplesPerBit = sampleRateHz / bitRate ;
+//  const U64 triggerSample = mAnalyzer->GetTriggerSample () ;
   char numberString [128] = "" ;
   switch (inFrame.mType) {
   case STANDARD_IDENTIFIER_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 12, numberString, 128);
+//     AnalyzerHelpers::GetTimeString (inFrame.mStartingSampleInclusive, triggerSample, sampleRateHz, numberString, 128) ;
+//     ioText << numberString ;
+//    ioText << (((triggerSample) * 1000000) / sampleRateHz) << " µs, " ;
+//     ioText << (((inFrame.mStartingSampleInclusive - triggerSample) * 1000000) / sampleRateHz) << " µs: " ;
+//     ioText << (((inFrame.mEndingSampleInclusive - triggerSample) * 1000000) / sampleRateHz) << " µs: " ;
+
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 12, numberString, 128);
+    snprintf (numberString, 128, "0x%03llX", inFrame.mData1) ;
     ioText << ((inFrame.mData2 == 0) ? "Std Remote idf: " : "Std Data idf: ") ;
     ioText << numberString ;
+    ioText << "\n" ;
     break ;
   case EXTENDED_IDENTIFIER_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 32, numberString, 128);
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 32, numberString, 128);
+    snprintf (numberString, 128, "0x%08llX", inFrame.mData1) ;
+//    ioText << (((inFrame.mStartingSampleInclusive - triggerSample) * 1000000) / sampleRateHz) << " µs: " ;
     ioText << ((inFrame.mData2 == 0) ? "Extended Remote idf: " : "Extended Data idf: ") ;
     ioText << numberString ;
+    ioText << "\n" ;
     break ;
   case CONTROL_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "Ctrl: " << inFrame.mData1 ;
+      ioText << "Ctrl: " << inFrame.mData1 << "\n" ;
     }
     break ;
   case DATA_FIELD_RESULT :
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);
+//    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 8, numberString, 128);
+    snprintf (numberString, 128, "0x%02llX", inFrame.mData1) ;
     if (!inBubbleText) {
       ioText << "  " ;
     }
-    ioText << "Data " << inFrame.mData2 << ": " << numberString ;
+    ioText << "D" << inFrame.mData2 << ": " << numberString << "\n" ;
     break ;
   case CRC_FIELD_RESULT : // Data1: CRC, Data2: is 0 if CRC ok
-    AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 16, numberString, 128);
+    // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 16, numberString, 128);
+    snprintf (numberString, 128, "0x%04llX", inFrame.mData1) ;
     if (inFrame.mData2 != 0) {
       if (!inBubbleText) {
         ioText << "  " ;
       }
-      ioText << "CRC: " << numberString << " (error)" ;
+      ioText << "CRC: " << numberString << " (error)\n" ;
     }else if (inBubbleText) {
-      ioText << "CRC: " << numberString ;
+      ioText << "CRC: " << numberString << "\n" ;
     }
     break ;
   case ACK_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "ACK" ;
+      ioText << "ACK\n" ;
     }
     break ;
   case EOF_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "EOF" ;
+      ioText << "EOF\n" ;
     }
     break ;
   case INTERMISSION_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "IFS" ;
+      ioText << "IFS\n" ;
     }else{
       const U64 frameSampleCount = inFrame.mData1 ;
-      const U32 sampleRateHz = mAnalyzer->sampleRateHz () ;
-      const U32 bitRate = mAnalyzer->bitRate () ;
-      const U32 samplesPerBit = sampleRateHz / bitRate ;
       ioText << "  Length: " << ((frameSampleCount + samplesPerBit / 2) / samplesPerBit) << " bits ("
-             << (frameSampleCount * 1000000 / sampleRateHz) << " µs), "
-             << inFrame.mData2 << " stuff bit"
-             << ((inFrame.mData2 > 1) ? "s" : "") ;
+             << (frameSampleCount * 1000000 / sampleRateHz) << " µs)\n"
+             << "  " << inFrame.mData2 << " stuff bit"
+             << ((inFrame.mData2 > 1) ? "s" : "")
+             << "\n" ;
     }
     break ;
   default :
-    ioText << "Error" ;
+    ioText << "Error\n" ;
     break ;
   }
 }

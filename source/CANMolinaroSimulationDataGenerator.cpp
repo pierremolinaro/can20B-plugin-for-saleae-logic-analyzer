@@ -198,8 +198,8 @@ CANMolinaroSimulationDataGenerator::~CANMolinaroSimulationDataGenerator () {
 
 //--------------------------------------------------------------------------------------------------
 
-void CANMolinaroSimulationDataGenerator::Initialize(const U32 simulation_sample_rate,
-                                                    CANMolinaroAnalyzerSettings * settings) {
+void CANMolinaroSimulationDataGenerator::Initialize (const U32 simulation_sample_rate,
+                                                     CANMolinaroAnalyzerSettings * settings) {
   mSimulationSampleRateHz = simulation_sample_rate;
   mSettings = settings;
 
@@ -219,27 +219,37 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
     mSimulationSampleRateHz
   );
 
+//--- Random Seed
+  srand (mSettings->simulatorRandomSeed ()) ;
+
+//--- Let's move forward for 11 recessive bits
+  const U32 samplesPerBit = mSimulationSampleRateHz / mSettings->mBitRate;
+  const bool inverted = mSettings->inverted () ;
+  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ;  // Edge for IDLE
+  mSerialSimulationData.Advance (samplesPerBit * 11) ;
+  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_HIGH : BIT_LOW) ;  // Edge for SOF bit
+
   while (mSerialSimulationData.GetCurrentSampleNumber() < adjusted_largest_sample_requested) {
-    CreateCANFrame () ;
+    createCANFrame (samplesPerBit, inverted) ;
   }
 
   *simulation_channel = &mSerialSimulationData;
-  return 1;
+  return 1 ;
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
-  const U32 samples_per_bit = mSimulationSampleRateHz / mSettings->mBitRate;
-  const bool inverted = mSettings->inverted () ;
+void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerBit,
+                                                         const bool inInverted) {
   const SimulatorGeneratedFrameType frameTypes = mSettings->generatedFrameType () ;
+  const SimulatorGeneratedFrameValidity simulatorFrameValidity = mSettings->generatedFrameValidity () ;
 //--- Generate random Frame
   bool extended = false ;
   bool remote = false ;
   switch (frameTypes) {
   case GENERATE_ALL_FRAME_TYPES :
-    extended = (random () & 1) != 0 ;
-    remote = (random () & 1) != 0 ;
+    extended = (rand () & 1) != 0 ;
+    remote = (rand () & 1) != 0 ;
     break ;
   case GENERATE_ONLY_STANDARD_DATA :
     break ;
@@ -257,11 +267,11 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
   uint8_t data [8] ;
   const FrameFormat format = extended ? extendedFrame : standardFrame ;
   const FrameType type = remote ? remoteFrame : dataFrame ;
-  const uint32_t identifier = uint32_t (random ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
-  const uint8_t dataLength = uint8_t (random ()) % 9 ;
+  const uint32_t identifier = uint32_t (rand ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
+  const uint8_t dataLength = uint8_t (rand ()) % 9 ;
   if (! remoteFrame) {
     for (uint32_t i=0 ; i<dataLength ; i++) {
-      data [i] = uint8_t (random ()) ;
+      data [i] = uint8_t (rand ()) ;
     }
   }
   AckSlot ack = ACK_SLOT_DOMINANT ;
@@ -272,21 +282,27 @@ void CANMolinaroSimulationDataGenerator::CreateCANFrame () {
     ack = ACK_SLOT_RECESSIVE ;
     break ;
   case GENERATE_ACK_RANDOMLY :
-    ack = ((random () & 1) != 0) ? ACK_SLOT_DOMINANT : ACK_SLOT_RECESSIVE ;
+    ack = ((rand () & 1) != 0) ? ACK_SLOT_DOMINANT : ACK_SLOT_RECESSIVE ;
     break ;
   }
   const CANFrameBitsGenerator frame (identifier, format, dataLength, data, type, ack) ;
-//--- Let's move forward for 11 recessive bits
-  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ;  // Edge for IDLE
-  mSerialSimulationData.Advance (samples_per_bit * 11) ;
-  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_HIGH : BIT_LOW) ;  // Edge for SOF bit
+//--- Generated bit error index
+  uint8_t generatedErrorBitIndex =  uint8_t (uint32_t (rand ()) % frame.frameLength ()) ;
+  switch (simulatorFrameValidity) {
+  case GENERATE_VALID_FRAMES :
+    generatedErrorBitIndex = 255 ;  // Means no generated error
+    break ;
+  case GENERATE_ONE_RANDOM_ERROR_BIT :
+    break ;
+  }
 //--- Now, send frame
   for (U32 i=0 ; i < frame.frameLength () ; i++) {
-    const bool bit = frame.bitAtIndex (i) ^ inverted ;
+    const bool generateBitError = i == generatedErrorBitIndex ;
+    const bool bit = frame.bitAtIndex (i) ^ inInverted ^ generateBitError ;
     mSerialSimulationData.TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
-    mSerialSimulationData.Advance (samples_per_bit) ;
+    mSerialSimulationData.Advance (inSamplesPerBit) ;
   }
-  mSerialSimulationData.TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
+  mSerialSimulationData.TransitionIfNeeded (inInverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
 }
 
 //--------------------------------------------------------------------------------------------------

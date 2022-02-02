@@ -26,6 +26,13 @@ typedef enum {
 
 //--------------------------------------------------------------------------------------------------
 
+typedef enum {
+  GENERATE_VALID_FRAMES,
+  GENERATE_ONE_RANDOM_ERROR_BIT
+} SimulatorGeneratedFrameValidity ;
+
+//--------------------------------------------------------------------------------------------------
+
 class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
 
   public: CANMolinaroAnalyzerSettings (void);
@@ -50,15 +57,28 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
    return mSimulatorGeneratedFrameType ;
   }
 
+  public: SimulatorGeneratedFrameValidity generatedFrameValidity (void) const {
+   return mGeneratedFrameValidity ;
+  }
+
+  public: U32 simulatorRandomSeed (void) const {
+   return mSimulatorRandomSeed ;
+  }
+
+
   protected: std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
   protected: std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
   protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
   protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
   protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameValidityInterface ;
+  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
 
   protected: SimulatorGeneratedAckSlot mSimulatorGeneratedAckSlot ;
   protected: SimulatorGeneratedFrameType mSimulatorGeneratedFrameType ;
   protected: bool mInverted ;
+  protected: SimulatorGeneratedFrameValidity mGeneratedFrameValidity ;
+  protected: U32 mSimulatorRandomSeed ;
 };
 
 //--------------------------------------------------------------------------------------------------

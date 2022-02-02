@@ -1,12 +1,20 @@
-# CAN 2.0B (Molinaro): Controller Area Network (CAN) Analyzer for Saleae logic Analyzers
+# CAN 2.0B (Molinaro): Controller Area Network (CAN) Analyzer for Saleae Logic 2 Analyzer
 
-This is a plugin for Saleae logic Analyzers, built with Saleae Analyzer SDK.
+This is a plugin for Saleae Logic 2 Analyzers, built with Saleae Analyzer SDK.
 
-## Building the plugin
+## Building and installing the plugin
 
 For building the plugin, see [https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build] (https://support.saleae.com/saleae-api-and-sdk/protocol-analyzer-sdk/build) 
 
 For installing the plugin, see [https://support.saleae.com/faq/technical-faq/setting-up-developer-directory](https://support.saleae.com/faq/technical-faq/setting-up-developer-directory)
+
+### MacOS addtionnal step
+An addtionnal step may be required on MacOS if the plugin cannot be loaded (see `Logic 2 MacOS Instructions` on previous page). The commands to run are :
+
+    cd release
+    install_name_tool -change @executable_path/libAnalyzer.dylib @rpath/libAnalyzer.dylib libCANMolinaroAnalyzer.dylib
+
+Note the `install-release.py` script runs this command and copy the `libCANMolinaroAnalyzer.dylib`file to the `~/Documents/customSaleaeLogicAnalyzers` directory.
 
 ## Selecting Analyzer
 
@@ -23,9 +31,30 @@ The analyzer Name is `CAN 2.0B (Molinaro)`.
 
 Usual CAN bit rates settings are `1000000` (1 Mbit/s), `500000` (500 kbit/s), `250000` (250 kbit/s), `125000` (125 kbit/s), `62500` (62.5 kbit/s). But you can use any custom setting (maximum is 1 Mbit/s).
 
+
 ### Dominant Logic Level
 
 Usually, CAN Dominant level is `LOW` logic level. This setting enables selecting `HIGH` as dominant level. 
+
+### Simulator Random Seed
+
+*This setting is only used be the simulator. The simulator is enabled when no device is connected the analyzer.*
+
+The simulator generates random frames. This setting defines the initial value of this parameter, making frame generation reproducible. 
+
+
+### Simulator Generated Frames Format
+
+*This setting is only used be the simulator. The simulator is enabled when no device is connected the analyzer.*
+
+You can set the format (standard / extended) and the the type (data / remote) that the simulator generates:
+
+* `All Types`: the simulator randomly generates standard / extended, data / remote frames;
+* `Only Standard Data Frames`: the simulator randomly generates standard data frames;
+* `Only Extended Data Frames`: the simulator randomly generates extended data frames;
+* `Only Standard Remote Frames`: the simulator randomly generates standard remote frames;
+* `Only Extended Remote Frames`: the simulator randomly generates extended remote frames.
+
 
 ### Simulator ACK SLOT generated level
 
@@ -39,17 +68,17 @@ Three settings are available:
 * `Recessive`: the simulator generates frames with the ACK SLOT bit recessive;
 * `Random`: the simulator generates frames with the ACK SLOT bit randomly dominant or recessive.
 
-### Simulator Generated Frames
+### Simulator Generated Frames Validity
 
 *This setting is only used be the simulator. The simulator is enabled when no device is connected the analyzer.*
 
-You can set the format (standard / extended) and the the type (data / remote) that the simulator generates:
+The simulator can generate valid frames, or frames with errors.
 
-* `All Types`: the simulator randomly generates standard / extended, data / remote frames;
-* `Only Standard Data Frames`: the simulator randomly generates standard data frames;
-* `Only Extended Data Frames`: the simulator randomly generates extended data frames;
-* `Only Standard Remote Frames`: the simulator randomly generates standard remote frames;
-* `Only Extended Remote Frames`: the simulator randomly generates extended remote frames.
+Two settings are available:
+
+* `Generate Valid Frames`: the simulator generates valid frames;
+* `Randomly toggle one bit`: in every generated frame, one random bit is inverted.
+
 
 ##Capture Display
 
@@ -59,7 +88,7 @@ This is the capture of a Standard data frame, identifier `0x7B1`, one data byte 
 ![](readme-images/capture-center.png)
 ![](readme-images/capture-right.png)
 
-By default, the center of a bit is indicated with a white dot.
+By default, the center of a bit is indicated with a dot.
 
 The green dot is the `SOF` (*Start Of Frame*) field.
 
@@ -82,14 +111,27 @@ All CAN frames fields are reported, but:
 
 If a CRC error is detected, the text is `CRC: xxx (error)`.
  
-## Tabular Text
+## Terminal
 
-For each frame, the tabular text contains:
+For each frame, the terminal contains:
 
 * the identifier;
 * the data bytes;
 * if there is a CRC error, the CRC field;
 * the frame bit length, its duration, and the number of stuff bits.
 
-![](readme-images/tabular-text.png)
+![](readme-images/terminal-text.png)
 
+ 
+## Data Table
+
+Every frame field is reported in data table. Unfortunatly, `Type` column contents cannot be set with the current SDK API (See [https://discuss.saleae.com/t/custom-analyzers/187/7](https://discuss.saleae.com/t/custom-analyzers/187/7)).
+
+
+![](readme-images/data-table.png)
+
+Note the Data Table has a fourth column, `Value` that is not visible by default. You can enlarge the data table by dragging its left border, and hide the useless `Type` column (`control click` on column header).
+
+
+
+![](readme-images/data-table-value.png)
