@@ -55,8 +55,8 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
 //---------------- CAN decoder properties
 //--- CAN protocol
   private: typedef enum  {
-    IDLE, IDENTIFIER, EXTENDED_IDF, CONTROL, DATA, CRC, CRC_DEL, ACK,
-    END_OF_FRAME, INTERMISSION, DECODER_ERROR
+    IDLE, IDENTIFIER, CONTROL, EXTENDED_IDF, DATA,
+    CRC15, CRC_DEL, ACK, END_OF_FRAME, INTERMISSION, DECODER_ERROR
   } FrameFieldEngineState ;
 
   private: FrameFieldEngineState mFrameFieldEngineState ;
@@ -68,21 +68,33 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
   private: U64 mStartOfFrameSampleNumber ;
   private: U64 mStuffBitCount ;
   private: U64 mStartOfFieldSampleNumber ;
-  private: U16 mCRCAccumulator ;
 
 //--- Received frame
   private: typedef enum {dataFrame, remoteFrame} FrameType ;
   private: uint32_t mIdentifier ;
   private: FrameType mFrameType ; // data, remote
-  private: int mDataLength ;
+  private: int mDataCodeLength ;
   private: uint8_t mData [8] ;
-  private: uint16_t mCRC ;
+  private: U16 mCRC15Accumulator ;
+  private: U16 mCRC15 ;
 
 //---------------- CAN decoder methods
-  private: void enterBitInCRC (const bool inBit) ;
+  private: void enterBitInCRC15 (const bool inBit) ;
   private: void addMark (const U64 inSampleNumber, const AnalyzerResults::MarkerType inMarker) ;
   private: void addBubble (const U8 inBubbleType, const U64 inData1, const U64 inData2, const U64 inEndSampleNumber) ;
   private: void enterInErrorMode (const U64 inSampleNumber) ;
+
+  private: void handle_IDLE_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_IDENTIFIER_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_EXTENDED_IDF_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CONTROL_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_DATA_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRC15_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_CRCDEL_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_ACK_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_ENDOFFRAME_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_INTERMISSION_state (const bool inBit, const U64 inSampleNumber) ;
+  private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inSampleNumber) ;
 } ;
 
 //--------------------------------------------------------------------------------------------------

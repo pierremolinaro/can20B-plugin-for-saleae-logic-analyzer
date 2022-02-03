@@ -220,7 +220,7 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
   );
 
 //--- Random Seed
-  srand (mSettings->simulatorRandomSeed ()) ;
+  mSeed = mSettings->simulatorRandomSeed () ;
 
 //--- Let's move forward for 11 recessive bits
   const U32 samplesPerBit = mSimulationSampleRateHz / mSettings->mBitRate;
@@ -248,8 +248,8 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
   bool remote = false ;
   switch (frameTypes) {
   case GENERATE_ALL_FRAME_TYPES :
-    extended = (rand () & 1) != 0 ;
-    remote = (rand () & 1) != 0 ;
+    extended = (pseudoRandomValue () & 1) != 0 ;
+    remote = (pseudoRandomValue () & 1) != 0 ;
     break ;
   case GENERATE_ONLY_STANDARD_DATA :
     break ;
@@ -264,16 +264,7 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
     remote = true ;
     break ;
   }
-  uint8_t data [8] ;
-  const FrameFormat format = extended ? extendedFrame : standardFrame ;
-  const FrameType type = remote ? remoteFrame : dataFrame ;
-  const uint32_t identifier = uint32_t (rand ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
-  const uint8_t dataLength = uint8_t (rand ()) % 9 ;
-  if (! remoteFrame) {
-    for (uint32_t i=0 ; i<dataLength ; i++) {
-      data [i] = uint8_t (rand ()) ;
-    }
-  }
+//--- ACK slot
   AckSlot ack = ACK_SLOT_DOMINANT ;
   switch (mSettings->generatedAckSlot ()) {
   case GENERATE_ACK_DOMINANT :
@@ -282,12 +273,23 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
     ack = ACK_SLOT_RECESSIVE ;
     break ;
   case GENERATE_ACK_RANDOMLY :
-    ack = ((rand () & 1) != 0) ? ACK_SLOT_DOMINANT : ACK_SLOT_RECESSIVE ;
+    ack = ((pseudoRandomValue () & 1) != 0) ? ACK_SLOT_DOMINANT : ACK_SLOT_RECESSIVE ;
     break ;
+  }
+//--- Generate frame
+  uint8_t data [8] ;
+  const FrameFormat format = extended ? extendedFrame : standardFrame ;
+  const FrameType type = remote ? remoteFrame : dataFrame ;
+  const uint32_t identifier = uint32_t (pseudoRandomValue ()) & (extended ? 0x1FFFFFFF : 0x7FF) ;
+  const uint8_t dataLength = uint8_t (pseudoRandomValue ()) % 9 ;
+  if (! remoteFrame) {
+    for (uint32_t i=0 ; i<dataLength ; i++) {
+      data [i] = uint8_t (pseudoRandomValue ()) ;
+    }
   }
   const CANFrameBitsGenerator frame (identifier, format, dataLength, data, type, ack) ;
 //--- Generated bit error index
-  uint8_t generatedErrorBitIndex =  uint8_t (uint32_t (rand ()) % frame.frameLength ()) ;
+  uint8_t generatedErrorBitIndex = uint8_t (uint32_t (pseudoRandomValue ()) % frame.frameLength ()) ;
   switch (simulatorFrameValidity) {
   case GENERATE_VALID_FRAMES :
     generatedErrorBitIndex = 255 ;  // Means no generated error

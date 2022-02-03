@@ -4,14 +4,14 @@
 #include <AnalyzerChannelData.h>
 
 //--------------------------------------------------------------------------------------------------
-//   CANFDMolinaroAnalyzer
+//   CANMolinaroAnalyzer
 //--------------------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzer::CANMolinaroAnalyzer () :
-Analyzer2(),
+Analyzer2 (),
 mSettings (new CANMolinaroAnalyzerSettings ()),
 mSimulationInitilized (false) {
-  SetAnalyzerSettings( mSettings.get() );
+  SetAnalyzerSettings (mSettings.get()) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -149,209 +149,287 @@ void CANMolinaroAnalyzer::enterBit (const bool inBit, const U64 inSampleNumber) 
 //--------------------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::decodeFrameBit (const bool inBit, const U64 inSampleNumber) {
-  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   switch (mFrameFieldEngineState) {
   case IDLE :
-    if (!inBit) {
-      mUnstuffingActive = true ;
-      mCRCAccumulator = 0 ;
-      mConsecutiveBitCountOfSamePolarity = 1 ;
-      mPreviousBit = false ;
-      enterBitInCRC (inBit) ;
-      addMark (inSampleNumber, AnalyzerResults::Start) ;
-      mFieldBitIndex = 0 ;
-      mIdentifier = 0 ;
-      mFrameFieldEngineState = IDENTIFIER ;
-      mStartOfFieldSampleNumber = inSampleNumber + samplesPerBit / 2 ;
-      mStartOfFrameSampleNumber = inSampleNumber ;
-      mStuffBitCount = 0 ;
-    }
+    handle_IDLE_state (inBit, inSampleNumber) ;
     break ;
   case IDENTIFIER :
-    enterBitInCRC (inBit) ;
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex <= 11) { // Standard identifier
-      addMark (inSampleNumber, AnalyzerResults::Dot);
-      mIdentifier <<= 1 ;
-      mIdentifier |= inBit ;
-    }else if (mFieldBitIndex == 12) { // RTR bit
-      addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
-      mFrameType = inBit ? remoteFrame : dataFrame  ;
-    }else{ // IDE
-      addMark (inSampleNumber, AnalyzerResults::Dot);
-      mFieldBitIndex = 0 ;
-      if (inBit) {
-        mFrameFieldEngineState = EXTENDED_IDF ;
-      }else{
-        addBubble (STANDARD_IDENTIFIER_FIELD_RESULT,
-                   mIdentifier,
-                   mFrameType == dataFrame, // 0 -> remote, 1 -> data
-                   inSampleNumber + samplesPerBit / 2) ;
-        mDataLength = 0 ;
-        mFrameFieldEngineState = CONTROL ;
-      }
-    }
+    handle_IDENTIFIER_state (inBit, inSampleNumber) ;
     break ;
   case EXTENDED_IDF :
-    enterBitInCRC (inBit) ;
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex <= 18) { // Extended identifier
-      addMark (inSampleNumber, AnalyzerResults::Dot);
-      mIdentifier <<= 1 ;
-      mIdentifier |= inBit ;
-    }else if (mFieldBitIndex == 19) { // RTR bit
-      addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
-      mFrameType = inBit ? remoteFrame : dataFrame  ;
-    }else{ // R1: should be dominant
-      addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorX : AnalyzerResults::Zero) ;
-      addBubble (EXTENDED_IDENTIFIER_FIELD_RESULT,
-                 mIdentifier,
-                 mFrameType == dataFrame, // 0 -> remote, 1 -> data
-                 inSampleNumber + samplesPerBit / 2) ;
-      mDataLength = 0 ;
-      mFieldBitIndex = 0 ;
-      if (inBit) {
-        enterInErrorMode (inSampleNumber + samplesPerBit / 2) ;
-      }else{
-        mFrameFieldEngineState = CONTROL ;
-      }
-    }
+    handle_EXTENDED_IDF_state (inBit, inSampleNumber) ;
     break ;
   case CONTROL :
-    enterBitInCRC (inBit) ;
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex == 1) { // R0
-      addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorX : AnalyzerResults::Zero) ;
-      if (inBit) {
-        enterInErrorMode (inSampleNumber + samplesPerBit / 2) ;
-      }
-    }else{
-      addMark (inSampleNumber, AnalyzerResults::Dot);
-      mDataLength <<= 1 ;
-      mDataLength |= inBit ;
-      if (mFieldBitIndex == 5) {
-        addBubble (CONTROL_FIELD_RESULT, mDataLength, 0, inSampleNumber + samplesPerBit / 2) ;
-        mFieldBitIndex = 0 ;
-        if (mDataLength > 8) {
-          mDataLength = 8 ;
-        }
-        mCRC = mCRCAccumulator ;
-        mFrameFieldEngineState = ((mDataLength == 0) || (mFrameType == remoteFrame))
-          ? CRC
-          : DATA
-        ;
-      }
-    }
+    handle_CONTROL_state (inBit, inSampleNumber) ;
     break ;
   case DATA :
-    enterBitInCRC (inBit) ;
-    addMark (inSampleNumber, AnalyzerResults::Dot);
-    mData [mFieldBitIndex / 8] <<= 1 ;
-    mData [mFieldBitIndex / 8] |= inBit ;
-    mFieldBitIndex ++ ;
-    if ((mFieldBitIndex % 8) == 0) {
-      const U32 dataIndex = (mFieldBitIndex - 1) / 8 ;
-      addBubble (DATA_FIELD_RESULT, mData [dataIndex], dataIndex, inSampleNumber + samplesPerBit / 2) ;
-    }
-    if (mFieldBitIndex == (8 * mDataLength)) {
-      mFieldBitIndex = 0 ;
-      mFrameFieldEngineState = CRC ;
-      mCRC = mCRCAccumulator ;
-    }
+    handle_DATA_state (inBit, inSampleNumber) ;
     break ;
-  case CRC :
-    enterBitInCRC (inBit) ;
-    addMark (inSampleNumber, AnalyzerResults::Dot);
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex == 15) {
-      mFieldBitIndex = 0 ;
-      mFrameFieldEngineState = CRC_DEL ;
-      addBubble (CRC_FIELD_RESULT, mCRC, mCRCAccumulator, inSampleNumber + samplesPerBit / 2) ;
-      if (mCRCAccumulator != 0) {
-        mFrameFieldEngineState = DECODER_ERROR ;
-      }
-    }
+  case CRC15 :
+    handle_CRC15_state (inBit, inSampleNumber) ;
     break ;
   case CRC_DEL :
-    mUnstuffingActive = false ;
-    if (inBit) {
-      addMark (inSampleNumber, AnalyzerResults::One) ;
-    }else{
-      enterInErrorMode (inSampleNumber) ;
-    }
-    mStartOfFieldSampleNumber = inSampleNumber + samplesPerBit / 2 ;
-    mFrameFieldEngineState = ACK ;
+    handle_CRCDEL_state (inBit, inSampleNumber) ;
     break ;
   case ACK :
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex == 1) { // ACK SLOT
-      addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Square);
-    }else{ // ACK DELIMITER
-      addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
-      if (inBit) {
-        addMark (inSampleNumber, AnalyzerResults::One) ;
-      }else{
-        enterInErrorMode (inSampleNumber) ;
-      }
-      mFieldBitIndex = 0 ;
-      mFrameFieldEngineState = END_OF_FRAME ;
-    }
+    handle_ACK_state (inBit, inSampleNumber) ;
     break ;
   case END_OF_FRAME :
-    if (inBit) {
-      addMark (inSampleNumber, AnalyzerResults::One) ;
-    }else{
-      enterInErrorMode (inSampleNumber) ;
-    }
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex == 7) {
-      addBubble (EOF_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
-      mFieldBitIndex = 0 ;
-      mFrameFieldEngineState = INTERMISSION ;
-    }
+    handle_ENDOFFRAME_state (inBit, inSampleNumber) ;
     break ;
   case INTERMISSION :
-    if (inBit) {
-      addMark (inSampleNumber, AnalyzerResults::One) ;
-    }else{
-      enterInErrorMode (inSampleNumber) ;
-    }
-    mFieldBitIndex ++ ;
-    if (mFieldBitIndex == 3) {
-      const U64 frameSampleCount = inSampleNumber - mStartOfFrameSampleNumber ;
-      addBubble (INTERMISSION_FIELD_RESULT,
-                 frameSampleCount,
-                 mStuffBitCount,
-                 inSampleNumber + samplesPerBit / 2) ;
-      mFieldBitIndex = 0 ;
-      mFrameFieldEngineState = IDLE ;
-    }
+    handle_INTERMISSION_state (inBit, inSampleNumber) ;
     break ;
   case DECODER_ERROR :
-    mUnstuffingActive = false ;
-    addMark (inSampleNumber, AnalyzerResults::ErrorDot);
-    if (mPreviousBit != inBit) {
-      mConsecutiveBitCountOfSamePolarity = 1 ;
-      mPreviousBit = inBit ;
-    }else if (inBit) {
-      mConsecutiveBitCountOfSamePolarity += 1 ;
-      if (mConsecutiveBitCountOfSamePolarity == 11) {
-        addBubble (CAN_ERROR_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
-        mFrameFieldEngineState = IDLE ;
-      }
+    handle_DECODER_ERROR_state (inBit, inSampleNumber) ;
+    break ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_IDLE_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  if (!inBit) {
+    mUnstuffingActive = true ;
+    mCRC15Accumulator = 0 ;
+    mConsecutiveBitCountOfSamePolarity = 1 ;
+    mPreviousBit = false ;
+    enterBitInCRC15 (inBit) ;
+    addMark (inSampleNumber, AnalyzerResults::Start) ;
+    mFieldBitIndex = 0 ;
+    mIdentifier = 0 ;
+    mFrameFieldEngineState = IDENTIFIER ;
+    mStartOfFieldSampleNumber = inSampleNumber + samplesPerBit / 2 ;
+    mStartOfFrameSampleNumber = inSampleNumber ;
+    mStuffBitCount = 0 ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  enterBitInCRC15 (inBit) ;
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex <= 11) { // Standard identifier
+    addMark (inSampleNumber, AnalyzerResults::Dot);
+    mIdentifier <<= 1 ;
+    mIdentifier |= inBit ;
+  }else if (mFieldBitIndex == 12) { // RTR bit
+    addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
+    mFrameType = inBit ? remoteFrame : dataFrame  ;
+  }else{ // IDE
+    addMark (inSampleNumber, AnalyzerResults::Dot);
+    if (inBit) {
+      mFrameFieldEngineState = EXTENDED_IDF ;
+      mFieldBitIndex = 0 ;
+    }else{
+      addBubble (STANDARD_IDENTIFIER_FIELD_RESULT,
+                 mIdentifier,
+                 mFrameType == dataFrame, // 0 -> remote, 1 -> data
+                 inSampleNumber - samplesPerBit / 2) ;
+      mDataCodeLength = 0 ;
+      mFrameFieldEngineState = CONTROL ;
+      mFieldBitIndex = 1 ;
     }
   }
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::enterBitInCRC (const bool inBit) {
-  const bool bit14 = (mCRCAccumulator & (1 << 14)) != 0 ;
+void CANMolinaroAnalyzer::handle_EXTENDED_IDF_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  enterBitInCRC15 (inBit) ;
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex <= 18) { // Extended identifier
+    addMark (inSampleNumber, AnalyzerResults::Dot);
+    mIdentifier <<= 1 ;
+    mIdentifier |= inBit ;
+  }else if (mFieldBitIndex == 19) { // RTR bit
+    addMark (inSampleNumber, inBit ? AnalyzerResults::UpArrow : AnalyzerResults::DownArrow) ;
+    mFrameType = inBit ? remoteFrame : dataFrame  ;
+  }else{ // R1: should be dominant
+    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorX : AnalyzerResults::Zero) ;
+    addBubble (EXTENDED_IDENTIFIER_FIELD_RESULT,
+               mIdentifier,
+               mFrameType == dataFrame, // 0 -> remote, 1 -> data
+               inSampleNumber - samplesPerBit / 2) ;
+    if (inBit) {
+      enterInErrorMode (inSampleNumber + samplesPerBit / 2) ;
+    }else{
+      mFrameFieldEngineState = CONTROL ;
+      mFieldBitIndex = 1 ;
+      mDataCodeLength = 0 ;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_CONTROL_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  enterBitInCRC15 (inBit) ;
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex == 2) { // R0
+    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorX : AnalyzerResults::Zero) ;
+    if (inBit) {
+      enterInErrorMode (inSampleNumber + samplesPerBit / 2) ;
+    }
+  }else{
+    addMark (inSampleNumber, AnalyzerResults::Dot);
+    mDataCodeLength <<= 1 ;
+    mDataCodeLength |= inBit ;
+    if (mFieldBitIndex == 6) {
+      addBubble (CONTROL_FIELD_RESULT, mDataCodeLength, 0, inSampleNumber + samplesPerBit / 2) ;
+      mFieldBitIndex = 0 ;
+      if (mDataCodeLength > 8) {
+        mDataCodeLength = 8 ;
+      }
+      mCRC15 = mCRC15Accumulator ;
+      mFrameFieldEngineState = ((mDataCodeLength == 0) || (mFrameType == remoteFrame))
+        ? CRC15
+        : DATA
+      ;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_DATA_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  enterBitInCRC15 (inBit) ;
+  addMark (inSampleNumber, AnalyzerResults::Dot);
+  mData [mFieldBitIndex / 8] <<= 1 ;
+  mData [mFieldBitIndex / 8] |= inBit ;
+  mFieldBitIndex ++ ;
+  if ((mFieldBitIndex % 8) == 0) {
+    const U32 dataIndex = (mFieldBitIndex - 1) / 8 ;
+    addBubble (DATA_FIELD_RESULT, mData [dataIndex], dataIndex, inSampleNumber + samplesPerBit / 2) ;
+  }
+  if (mFieldBitIndex == (8 * mDataCodeLength)) {
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = CRC15 ;
+    mCRC15 = mCRC15Accumulator ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_CRC15_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  enterBitInCRC15 (inBit) ;
+  addMark (inSampleNumber, AnalyzerResults::Dot);
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex == 15) {
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = CRC_DEL ;
+    addBubble (CRC_FIELD_RESULT, mCRC15, mCRC15Accumulator, inSampleNumber + samplesPerBit / 2) ;
+    if (mCRC15Accumulator != 0) {
+      mFrameFieldEngineState = DECODER_ERROR ;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  mUnstuffingActive = false ;
+  if (inBit) {
+    addMark (inSampleNumber, AnalyzerResults::One) ;
+  }else{
+    enterInErrorMode (inSampleNumber) ;
+  }
+  mStartOfFieldSampleNumber = inSampleNumber + samplesPerBit / 2 ;
+  mFrameFieldEngineState = ACK ;
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex == 1) { // ACK SLOT
+    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Square);
+  }else{ // ACK DELIMITER
+    addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
+    if (inBit) {
+      addMark (inSampleNumber, AnalyzerResults::One) ;
+    }else{
+      enterInErrorMode (inSampleNumber) ;
+    }
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = END_OF_FRAME ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  if (inBit) {
+    addMark (inSampleNumber, AnalyzerResults::One) ;
+  }else{
+    enterInErrorMode (inSampleNumber) ;
+  }
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex == 7) {
+    addBubble (EOF_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = INTERMISSION ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  if (inBit) {
+    addMark (inSampleNumber, AnalyzerResults::One) ;
+  }else{
+    enterInErrorMode (inSampleNumber) ;
+  }
+  mFieldBitIndex ++ ;
+  if (mFieldBitIndex == 3) {
+    const U64 frameSampleCount = inSampleNumber - mStartOfFrameSampleNumber ;
+    addBubble (INTERMISSION_FIELD_RESULT,
+               frameSampleCount,
+               mStuffBitCount,
+               inSampleNumber + samplesPerBit / 2) ;
+    mFieldBitIndex = 0 ;
+    mFrameFieldEngineState = IDLE ;
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBit, const U64 inSampleNumber) {
+  const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  mUnstuffingActive = false ;
+  addMark (inSampleNumber, AnalyzerResults::ErrorDot);
+  if (mPreviousBit != inBit) {
+    mConsecutiveBitCountOfSamePolarity = 1 ;
+    mPreviousBit = inBit ;
+  }else if (inBit) {
+    mConsecutiveBitCountOfSamePolarity += 1 ;
+    if (mConsecutiveBitCountOfSamePolarity == 11) {
+      addBubble (CAN_ERROR_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
+      mFrameFieldEngineState = IDLE ;
+    }
+  }
+}
+
+//--------------------------------------------------------------------------------------------------
+
+void CANMolinaroAnalyzer::enterBitInCRC15 (const bool inBit) {
+  const bool bit14 = (mCRC15Accumulator & (1 << 14)) != 0 ;
   const bool crc_nxt = inBit ^ bit14 ;
-  mCRCAccumulator <<= 1 ;
-  mCRCAccumulator &= 0x7FFF ;
+  mCRC15Accumulator <<= 1 ;
+  mCRC15Accumulator &= 0x7FFF ;
   if (crc_nxt) {
-    mCRCAccumulator ^= 0x4599 ;
+    mCRC15Accumulator ^= 0x4599 ;
   }
 }
 
@@ -391,5 +469,4 @@ void CANMolinaroAnalyzer::enterInErrorMode (const U64 inSampleNumber) {
 }
 
 //--------------------------------------------------------------------------------------------------
-
 

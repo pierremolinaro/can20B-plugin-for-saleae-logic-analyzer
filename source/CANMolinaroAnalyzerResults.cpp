@@ -49,7 +49,7 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     // AnalyzerHelpers::GetNumberString (inFrame.mData1, inDisplayBase, 32, numberString, 128);
     snprintf (numberString, 128, "0x%08llX", inFrame.mData1) ;
 //    ioText << (((inFrame.mStartingSampleInclusive - triggerSample) * 1000000) / sampleRateHz) << " µs: " ;
-    ioText << ((inFrame.mData2 == 0) ? "Extended Remote idf: " : "Extended Data idf: ") ;
+    ioText << ((inFrame.mData2 == 0) ? "Ext Remote idf: " : "Ext Data idf: ") ;
     ioText << numberString ;
     ioText << "\n" ;
     break ;

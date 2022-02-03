@@ -46,6 +46,7 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
 
   public: Channel mInputChannel;
   public: U32 mBitRate;
+  public: U32 bitRate (void) const { return mBitRate ; }
 
   public: bool inverted (void) const { return mInverted ; }
 
