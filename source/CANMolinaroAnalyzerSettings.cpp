@@ -125,7 +125,6 @@ void CANMolinaroAnalyzerSettings::UpdateInterfacesFromSettings() {
   mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
   mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
   mSimulatorFrameValidityInterface->SetNumber (mGeneratedFrameValidity) ;
-  mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
 }
 
 //--------------------------------------------------------------------------------------------------
