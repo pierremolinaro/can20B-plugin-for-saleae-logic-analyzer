@@ -352,7 +352,7 @@ void CANMolinaroAnalyzer::handle_ACK_state (const bool inBit, const U64 inSample
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
-    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::Square);
+    addMark (inSampleNumber, inBit ? AnalyzerResults::ErrorSquare : AnalyzerResults::DownArrow);
   }else{ // ACK DELIMITER
     addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
     if (inBit) {
