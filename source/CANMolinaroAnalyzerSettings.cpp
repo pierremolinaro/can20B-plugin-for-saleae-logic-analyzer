@@ -15,13 +15,15 @@ mSimulatorFrameValidityInterface (),
 mSimulatorRandomSeedInterface (),
 mSimulatorGeneratedAckSlot (GENERATE_ACK_DOMINANT),
 mSimulatorGeneratedFrameType (GENERATE_ALL_FRAME_TYPES),
-mInverted (false),
 mGeneratedFrameValidity (GENERATE_VALID_FRAMES),
-mSimulatorRandomSeed (0) {
+mSimulatorRandomSeed (0),
+mInverted (false) {
+//--- Input Channel interface
   mInputChannelInterface.reset (new AnalyzerSettingInterfaceChannel ());
   mInputChannelInterface->SetTitleAndTooltip ("Serial", "CAN 2.0B");
   mInputChannelInterface->SetChannel (mInputChannel);
 
+//--- Bit rate interface
   mBitRateInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
   mBitRateInterface->SetTitleAndTooltip ("CAN Bit Rate (bit/s)",
                                          "Specify the CAN bit rate in bits per second." );
@@ -38,6 +40,7 @@ mSimulatorRandomSeed (0) {
   mCanChannelInvertedInterface->AddNumber (1.0,
                                            "High",
                                            "High is the inverted dominant level") ;
+  mCanChannelInvertedInterface->SetNumber (0.0) ;
 
 //--- Simulator random Seed
   mSimulatorRandomSeedInterface.reset (new AnalyzerSettingInterfaceInteger ()) ;
@@ -58,6 +61,7 @@ mSimulatorRandomSeed (0) {
   mSimulatorAckGenerationInterface->AddNumber (2.0,
                                                "Random",
                                "The simulator generates dominant or recessive level randomly") ;
+  mSimulatorAckGenerationInterface->SetNumber (0.0) ;
 
 //--- Simulator Generated frames format
   mSimulatorFrameTypeGenerationInterface.reset (new AnalyzerSettingInterfaceNumberList ()) ;
@@ -85,46 +89,50 @@ mSimulatorRandomSeed (0) {
   AddInterface (mSimulatorAckGenerationInterface.get ());
   AddInterface (mSimulatorFrameValidityInterface.get ());
 
-  AddExportOption( 0, "Export as text/csv file" );
-  AddExportExtension( 0, "text", "txt" );
-  AddExportExtension( 0, "csv", "csv" );
+//   AddExportOption( 0, "Export as text/csv file" );
+//   AddExportExtension( 0, "text", "txt" );
+//   AddExportExtension( 0, "csv", "csv" );
 
-  ClearChannels ();
+  ClearChannels () ;
   AddChannel (mInputChannel, "Serial", false) ;
 }
 
 //--------------------------------------------------------------------------------------------------
 
-CANMolinaroAnalyzerSettings::~CANMolinaroAnalyzerSettings () {
+CANMolinaroAnalyzerSettings::~CANMolinaroAnalyzerSettings (void) {
 }
 
 //--------------------------------------------------------------------------------------------------
 
-bool CANMolinaroAnalyzerSettings::SetSettingsFromInterfaces () {
-  mInputChannel = mInputChannelInterface->GetChannel();
-  mBitRate = mBitRateInterface->GetInteger();
-  mSimulatorRandomSeed = mSimulatorRandomSeedInterface->GetInteger () ;
+bool CANMolinaroAnalyzerSettings::SetSettingsFromInterfaces (void) {
+  mInputChannel = mInputChannelInterface->GetChannel () ;
+  mBitRate = mBitRateInterface->GetInteger () ;
   mInverted = U32 (mCanChannelInvertedInterface->GetNumber ()) != 0 ;
-  mGeneratedFrameValidity = SimulatorGeneratedFrameValidity (mSimulatorFrameValidityInterface->GetNumber ()) ;
-  mSimulatorGeneratedAckSlot = SimulatorGeneratedAckSlot (mSimulatorAckGenerationInterface->GetNumber ()) ;
-  mSimulatorGeneratedFrameType = SimulatorGeneratedFrameType (mSimulatorFrameTypeGenerationInterface->GetNumber ()) ;
+  mSimulatorRandomSeed = mSimulatorRandomSeedInterface->GetInteger () ;
+  mSimulatorGeneratedAckSlot = U32 (mSimulatorAckGenerationInterface->GetNumber ()) ;
+  mSimulatorGeneratedFrameType = U32 (mSimulatorFrameTypeGenerationInterface->GetNumber ()) ;
+  mGeneratedFrameValidity = U32 (mSimulatorFrameValidityInterface->GetNumber ()) ;
 
-  ClearChannels();
+  ClearChannels () ;
   AddChannel (mInputChannel, "CAN", true) ;
 
-  return true;
+  return true ;
 }
 
 //--------------------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzerSettings::UpdateInterfacesFromSettings() {
-  mInputChannelInterface->SetChannel (mInputChannel) ;
-  mBitRateInterface->SetInteger (mBitRate) ;
-  mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
-  mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
-  mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
-  mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
-  mSimulatorFrameValidityInterface->SetNumber (mGeneratedFrameValidity) ;
+const char * CANMolinaroAnalyzerSettings::SaveSettings (void) {
+  SimpleArchive text_archive;
+
+  text_archive << mInputChannel ;
+  text_archive << mBitRate ;
+  text_archive << mInverted ;
+  text_archive << mSimulatorRandomSeed ;
+  text_archive << mSimulatorGeneratedAckSlot ;
+  text_archive << mSimulatorGeneratedFrameType ;
+  text_archive << mGeneratedFrameValidity ;
+
+  return SetReturnString (text_archive.GetString ()) ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -136,30 +144,22 @@ void CANMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   text_archive >> mInputChannel;
   text_archive >> mBitRate;
   text_archive >> mInverted;
-  U32 value ;
-  text_archive >> value ;
-  mSimulatorGeneratedAckSlot = SimulatorGeneratedAckSlot (value) ;
-  text_archive >> value ;
-  mSimulatorGeneratedFrameType = SimulatorGeneratedFrameType (value) ;
+  text_archive >> mSimulatorRandomSeed ;
+  text_archive >> mSimulatorGeneratedAckSlot ;
+  text_archive >> mSimulatorGeneratedFrameType ;
+  text_archive >> mGeneratedFrameValidity ;
 
-  ClearChannels();
+ // ClearChannels();
   AddChannel (mInputChannel, "CAN 2.0B (Molinaro)", true) ;
 
-  UpdateInterfacesFromSettings();
-}
-
-//--------------------------------------------------------------------------------------------------
-
-const char* CANMolinaroAnalyzerSettings::SaveSettings () {
-  SimpleArchive text_archive;
-
-  text_archive << mInputChannel;
-  text_archive << mBitRate;
-  text_archive << mInverted;
-  text_archive << U32 (mSimulatorGeneratedAckSlot) ;
-  text_archive << U32 (mSimulatorGeneratedFrameType) ;
-
-  return SetReturnString (text_archive.GetString ()) ;
+//--- Update interface
+  mInputChannelInterface->SetChannel (mInputChannel) ;
+  mBitRateInterface->SetInteger (mBitRate) ;
+  mSimulatorRandomSeedInterface->SetInteger (mSimulatorRandomSeed) ;
+  mCanChannelInvertedInterface->SetNumber (double (mInverted)) ;
+  mSimulatorAckGenerationInterface->SetNumber (mSimulatorGeneratedAckSlot) ;
+  mSimulatorFrameTypeGenerationInterface->SetNumber (mSimulatorGeneratedFrameType) ;
+  mSimulatorFrameValidityInterface->SetNumber (mGeneratedFrameValidity) ;
 }
 
 //--------------------------------------------------------------------------------------------------

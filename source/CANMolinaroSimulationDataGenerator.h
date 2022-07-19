@@ -37,7 +37,7 @@ class CANMolinaroSimulationDataGenerator {
 
   protected: void createCANFrame (const U32 inSamplesPerBit, const bool inInverted) ;
 
-  protected: SimulationChannelDescriptor mSerialSimulationData ;
+  protected: SimulationChannelDescriptor * mSerialSimulationData ;
 } ;
 
 //--------------------------------------------------------------------------------------------------

@@ -8,40 +8,33 @@
 
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {
-  GENERATE_ACK_DOMINANT,
-  GENERATE_ACK_RECESSIVE,
-  GENERATE_ACK_RANDOMLY
-} SimulatorGeneratedAckSlot ;
+static const U32 GENERATE_ACK_DOMINANT = 0 ;
+static const U32 GENERATE_ACK_RECESSIVE = 1 ;
+static const U32 GENERATE_ACK_RANDOMLY = 2 ;
 
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {
-  GENERATE_ALL_FRAME_TYPES,
-  GENERATE_ONLY_STANDARD_DATA,
-  GENERATE_ONLY_EXTENDED_DATA,
-  GENERATE_ONLY_STANDARD_REMOTE,
-  GENERATE_ONLY_EXTENDED_REMOTE
-} SimulatorGeneratedFrameType ;
+static const U32 GENERATE_ALL_FRAME_TYPES = 0 ;
+static const U32 GENERATE_ONLY_STANDARD_DATA = 1 ;
+static const U32 GENERATE_ONLY_EXTENDED_DATA = 2 ;
+static const U32 GENERATE_ONLY_STANDARD_REMOTE = 3 ;
+static const U32 GENERATE_ONLY_EXTENDED_REMOTE = 4 ;
 
 //--------------------------------------------------------------------------------------------------
 
-typedef enum {
-  GENERATE_VALID_FRAMES,
-  GENERATE_ONE_RANDOM_ERROR_BIT
-} SimulatorGeneratedFrameValidity ;
+static const U32 GENERATE_VALID_FRAMES = 0 ;
+static const U32 GENERATE_ONE_RANDOM_ERROR_BIT = 1 ;
 
 //--------------------------------------------------------------------------------------------------
 
 class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
 
-  public: CANMolinaroAnalyzerSettings (void);
-  public: virtual ~CANMolinaroAnalyzerSettings();
+  public: CANMolinaroAnalyzerSettings (void) ;
+  public: virtual ~CANMolinaroAnalyzerSettings (void) ;
 
-  public: virtual bool SetSettingsFromInterfaces();
-  public: void UpdateInterfacesFromSettings();
-  public: virtual void LoadSettings( const char* settings );
-  public: virtual const char* SaveSettings();
+  public: virtual bool SetSettingsFromInterfaces (void) ;
+  public: virtual void LoadSettings (const char* settings) ;
+  public: virtual const char* SaveSettings (void) ;
 
 
   public: Channel mInputChannel;
@@ -50,15 +43,15 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
 
   public: bool inverted (void) const { return mInverted ; }
 
-  public: SimulatorGeneratedAckSlot generatedAckSlot (void) const {
+  public: U32 generatedAckSlot (void) const {
     return mSimulatorGeneratedAckSlot ;
   }
 
-  public: SimulatorGeneratedFrameType generatedFrameType (void) const {
+  public: U32 generatedFrameType (void) const {
    return mSimulatorGeneratedFrameType ;
   }
 
-  public: SimulatorGeneratedFrameValidity generatedFrameValidity (void) const {
+  public: U32 generatedFrameValidity (void) const {
    return mGeneratedFrameValidity ;
   }
 
@@ -67,20 +60,20 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
   }
 
 
-  protected: std::auto_ptr< AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger >  mBitRateInterface;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceNumberList > mSimulatorFrameValidityInterface ;
-  protected: std::auto_ptr< AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceInteger >  mBitRateInterface;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameValidityInterface ;
+  protected: std::auto_ptr < AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
 
-  protected: SimulatorGeneratedAckSlot mSimulatorGeneratedAckSlot ;
-  protected: SimulatorGeneratedFrameType mSimulatorGeneratedFrameType ;
-  protected: bool mInverted ;
-  protected: SimulatorGeneratedFrameValidity mGeneratedFrameValidity ;
+  protected: U32 mSimulatorGeneratedAckSlot ;
+  protected: U32 mSimulatorGeneratedFrameType ;
+  protected: U32 mGeneratedFrameValidity ;
   protected: U32 mSimulatorRandomSeed ;
-};
+  protected: bool mInverted ;
+} ;
 
 //--------------------------------------------------------------------------------------------------
 
