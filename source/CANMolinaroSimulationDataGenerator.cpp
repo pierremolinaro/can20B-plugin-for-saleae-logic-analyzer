@@ -237,6 +237,7 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
   while (mSerialSimulationData->GetCurrentSampleNumber() < adjusted_largest_sample_requested) {
     createCANFrame (samplesPerBit, inverted) ;
   }
+  mSerialSimulationData->TransitionIfNeeded (inverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
 
   *simulation_channel = mSerialSimulationData ;
   return 1 ;
@@ -252,10 +253,6 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
   bool extended = false ;
   bool remote = false ;
   switch (frameTypes) {
-//   case GENERATE_ALL_FRAME_TYPES :
-//     extended = (pseudoRandomValue () & 1) != 0 ;
-//     remote = (pseudoRandomValue () & 1) != 0 ;
-//     break ;
   case GENERATE_ONLY_STANDARD_DATA :
     break ;
   case GENERATE_ONLY_EXTENDED_DATA :
@@ -298,7 +295,7 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
   }
   const CANFrameBitsGenerator frame (identifier, format, dataLength, data, type, ack) ;
 //--- Generated bit error index
-  U32 generatedErrorBitIndex = U32 (pseudoRandomValue ()) % (frame.frameLength () - 1) ;
+  U32 generatedErrorBitIndex = U32 (pseudoRandomValue ()) % frame.frameLength () ;
   if (simulatorFrameValidity == GENERATE_VALID_FRAMES) {
     generatedErrorBitIndex = 255 ;  // Means no generated error
   }
@@ -309,7 +306,7 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
     mSerialSimulationData->TransitionIfNeeded (bit ? BIT_HIGH : BIT_LOW) ;
     mSerialSimulationData->Advance (inSamplesPerBit) ;
   }
-  mSerialSimulationData->TransitionIfNeeded (inInverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
+//  mSerialSimulationData->TransitionIfNeeded (inInverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
 }
 
 //--------------------------------------------------------------------------------------------------
