@@ -60,13 +60,13 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
   }
 
 
-  protected: std::auto_ptr < AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceInteger >  mBitRateInterface;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameValidityInterface ;
-  protected: std::auto_ptr < AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceChannel >  mInputChannelInterface;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceInteger >  mBitRateInterface;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceNumberList > mCanChannelInvertedInterface ;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorAckGenerationInterface ;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameTypeGenerationInterface ;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceNumberList > mSimulatorFrameValidityInterface ;
+  protected: std::unique_ptr < AnalyzerSettingInterfaceInteger > mSimulatorRandomSeedInterface ;
 
   protected: U32 mSimulatorGeneratedAckSlot ;
   protected: U32 mSimulatorGeneratedFrameType ;

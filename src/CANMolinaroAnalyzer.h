@@ -37,8 +37,8 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
 
 
 //--- Protected properties
-  protected: std::auto_ptr< CANMolinaroAnalyzerSettings > mSettings;
-  protected: std::auto_ptr< CANMolinaroAnalyzerResults > mResults;
+  protected: std::unique_ptr < CANMolinaroAnalyzerSettings > mSettings;
+  protected: std::unique_ptr < CANMolinaroAnalyzerResults > mResults;
   protected: AnalyzerChannelData* mSerial;
 
   protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
