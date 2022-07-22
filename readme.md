@@ -1,6 +1,6 @@
 # CAN 2.0B (Molinaro): Controller Area Network (CAN) Analyzer for Saleae Logic 2 Analyzer
 
-This is a plugin for Saleae Logic 2 Analyzers, built with Saleae Analyzer SDK. From July 22, 2022, it uses `FrameV2` so it can use only with Saleae Logic 2.3.43 or newer.
+This is a plugin for Saleae Logic 2 Analyzers, built with Saleae Analyzer SDK. From July 22, 2022, it uses `FrameV2` so it can be used only with Saleae Logic 2.3.43 or newer.
 
 ## Building the plugin
 
