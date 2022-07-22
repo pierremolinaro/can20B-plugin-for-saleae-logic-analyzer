@@ -3,6 +3,9 @@
 
 #include <AnalyzerChannelData.h>
 
+#include <string>
+#include <sstream>
+
 //--------------------------------------------------------------------------------------------------
 //   CANMolinaroAnalyzer
 //--------------------------------------------------------------------------------------------------
@@ -12,6 +15,7 @@ Analyzer2 (),
 mSettings (new CANMolinaroAnalyzerSettings ()),
 mSimulationInitilized (false) {
   SetAnalyzerSettings (mSettings.get()) ;
+  UseFrameV2 () ;
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -454,6 +458,60 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   frame.mStartingSampleInclusive = mStartOfFieldSampleNumber ;
   frame.mEndingSampleInclusive = inEndSampleNumber ;
   mResults->AddFrame (frame) ;
+
+  FrameV2 frameV2 ;
+  switch (inBubbleType) {
+  case STANDARD_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", idf, 2) ;
+ //     frameV2.AddInteger ("Value", inData1) ;
+      mResults->AddFrameV2 (frameV2, "Std Idf", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    }
+    break ;
+  case EXTENDED_IDENTIFIER_FIELD_RESULT :
+    { const U8 idf [4] = {
+        U8 (inData1 >> 24), U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1)
+      } ;
+      frameV2.AddByteArray ("Value", idf, 4) ;
+ //     frameV2.AddInteger ("Value", inData1) ;
+    mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    }
+    break ;
+  case CONTROL_FIELD_RESULT :
+    frameV2.AddByte ("Value", inData1) ;
+    mResults->AddFrameV2 (frameV2, "Ctrl", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    break ;
+  case DATA_FIELD_RESULT :
+    { frameV2.AddByte ("Value", inData1) ;
+      std::stringstream str ;
+      str << "D" << inData2 ;
+      mResults->AddFrameV2 (frameV2, str.str ().c_str (), mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    }
+    break ;
+  case CRC_FIELD_RESULT :
+    { const U8 crc [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
+      frameV2.AddByteArray ("Value", crc, 2) ;
+   // frameV2.AddInteger ("Value", inData1) ;
+      mResults->AddFrameV2 (frameV2, "CRC", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    }
+    break ;
+  case ACK_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "ACK", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    break ;
+  case EOF_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    break ;
+  case INTERMISSION_FIELD_RESULT :
+    mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    break ;
+  case CAN_ERROR_RESULT :
+    mResults->AddFrameV2 (frameV2, "Error", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    break ;
+  }
+//   frameV2.AddInteger ("Data1", inData1) ;
+//   frameV2.AddInteger ("Data2", inData2) ;
+//   mResults->AddFrameV2 (frameV2, "Field", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+
   mResults->CommitResults () ;
   ReportProgress (frame.mEndingSampleInclusive) ;
 //--- Prepare for next bubble
