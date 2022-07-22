@@ -464,7 +464,6 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   case STANDARD_IDENTIFIER_FIELD_RESULT :
     { const U8 idf [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
       frameV2.AddByteArray ("Value", idf, 2) ;
- //     frameV2.AddInteger ("Value", inData1) ;
       mResults->AddFrameV2 (frameV2, "Std Idf", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     }
     break ;
@@ -473,8 +472,7 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
         U8 (inData1 >> 24), U8 (inData1 >> 16), U8 (inData1 >> 8), U8 (inData1)
       } ;
       frameV2.AddByteArray ("Value", idf, 4) ;
- //     frameV2.AddInteger ("Value", inData1) ;
-    mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+      mResults->AddFrameV2 (frameV2, "Ext Idf", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     }
     break ;
   case CONTROL_FIELD_RESULT :
@@ -491,7 +489,6 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   case CRC_FIELD_RESULT :
     { const U8 crc [2] = { U8 (inData1 >> 8), U8 (inData1) } ;
       frameV2.AddByteArray ("Value", crc, 2) ;
-   // frameV2.AddInteger ("Value", inData1) ;
       mResults->AddFrameV2 (frameV2, "CRC", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     }
     break ;
@@ -502,15 +499,31 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
     mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     break ;
   case INTERMISSION_FIELD_RESULT :
-    mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+//       const U64 frameSampleCount = inFrame.mData1 ;
+//       ioText << "  Length: " << ((frameSampleCount + samplesPerBit / 2) / samplesPerBit) << " bits ("
+//              << (frameSampleCount * 1000000 / sampleRateHz) << " µs)\n"
+//              << "  " << inFrame.mData2 << " stuff bit"
+//              << ((inFrame.mData2 > 1) ? "s" : "")
+//              << "\n" ;
+//     }
+
+    { const U64 frameSampleCount = inData1 ;
+      const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+      const U64 length = (frameSampleCount + samplesPerBit / 2) / samplesPerBit ;
+      const U64 stuffBitCount = inData2 ;
+      const U64 durationMicroSeconds = frameSampleCount * 1000000 / mSampleRateHz ;
+      std::stringstream str ;
+      str << length << " bits, "
+          << durationMicroSeconds << "µs, "
+          << stuffBitCount << " stuff bit" << ((inData2 > 1) ? "s" : "") ;
+      frameV2.AddString ("Value", str.str ().c_str ()) ;
+      mResults->AddFrameV2 (frameV2, "IFS", mStartOfFieldSampleNumber, inEndSampleNumber) ;
+    }
     break ;
   case CAN_ERROR_RESULT :
     mResults->AddFrameV2 (frameV2, "Error", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     break ;
   }
-//   frameV2.AddInteger ("Data1", inData1) ;
-//   frameV2.AddInteger ("Data2", inData2) ;
-//   mResults->AddFrameV2 (frameV2, "Field", mStartOfFieldSampleNumber, inEndSampleNumber) ;
 
   mResults->CommitResults () ;
   ReportProgress (frame.mEndingSampleInclusive) ;
