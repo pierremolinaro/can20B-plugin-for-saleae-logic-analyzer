@@ -499,14 +499,6 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
     mResults->AddFrameV2 (frameV2, "EOF", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     break ;
   case INTERMISSION_FIELD_RESULT :
-//       const U64 frameSampleCount = inFrame.mData1 ;
-//       ioText << "  Length: " << ((frameSampleCount + samplesPerBit / 2) / samplesPerBit) << " bits ("
-//              << (frameSampleCount * 1000000 / sampleRateHz) << " µs)\n"
-//              << "  " << inFrame.mData2 << " stuff bit"
-//              << ((inFrame.mData2 > 1) ? "s" : "")
-//              << "\n" ;
-//     }
-
     { const U64 frameSampleCount = inData1 ;
       const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
       const U64 length = (frameSampleCount + samplesPerBit / 2) / samplesPerBit ;
