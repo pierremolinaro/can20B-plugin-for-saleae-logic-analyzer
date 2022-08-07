@@ -41,34 +41,34 @@ void CANMolinaroAnalyzer::SetupResults () {
 
 //--------------------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::WorkerThread () {
+void CANMolinaroAnalyzer::WorkerThread (void) {
+  mResults.reset (new CANMolinaroAnalyzerResults (this, mSettings.get ())) ;
+  SetAnalyzerResults (mResults.get ()) ;
+  mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
+//---
   const bool inverted = mSettings->inverted () ;
   mSampleRateHz = GetSampleRate () ;
-  mSerial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
+  AnalyzerChannelData * serial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
 //--- Sample settings
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
 //--- Synchronize to recessive level
-  if (mSerial->GetBitState() == (inverted ? BIT_HIGH : BIT_LOW)) {
-    mSerial->AdvanceToNextEdge () ;
+  if (serial->GetBitState () == (inverted ? BIT_HIGH : BIT_LOW)) {
+    serial->AdvanceToNextEdge () ;
   }
+//--- Initial bit state
+  mFrameFieldEngineState = IDLE ;
+  mPreviousBit = (serial->GetBitState () == BIT_HIGH) ^ inverted ;
+  mUnstuffingActive = false ;
   while (1) {
-  //--- Synchronize on falling edge: this SOF bit
-    mFrameFieldEngineState = IDLE ;
-    mUnstuffingActive = false ;
-  //--- Loop util the end of the frame (11 consecutive high bits)
-    bool currentBitValue = true ;
-    do{
-      mSerial->AdvanceToNextEdge () ;
-      currentBitValue ^= true ;
-      const U64 start = mSerial->GetSampleNumber () ;
-      const U64 nextEdge = mSerial->GetSampleOfNextEdge () ;
-      const U64 bitCount = (nextEdge - start + samplesPerBit / 2) / samplesPerBit ;
-      for (U64 i=0 ; i<bitCount ; i++) {
-        enterBit (currentBitValue, start + i * samplesPerBit + samplesPerBit / 2) ;
-      }
-    }while (mFrameFieldEngineState != IDLE) ;
-  //---
+    const bool currentBitValue = (serial->GetBitState () == BIT_HIGH) ^ inverted ;
+    const U64 start = serial->GetSampleNumber () ;
+    const U64 nextEdge = serial->GetSampleOfNextEdge () ;
+    const U64 bitCount = (nextEdge - start + samplesPerBit / 2) / samplesPerBit ;
+    for (U64 i=0 ; i<bitCount ; i++) {
+      enterBit (currentBitValue, start + i * samplesPerBit + samplesPerBit / 2) ;
+    }
     mResults->CommitResults () ;
+    serial->AdvanceToNextEdge () ;
   }
 }
 
@@ -83,7 +83,7 @@ bool CANMolinaroAnalyzer::NeedsRerun () {
 U32 CANMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                  U32 device_sample_rate,
                                                  SimulationChannelDescriptor** simulation_channels ) {
-  if( mSimulationInitilized == false ) {
+  if (mSimulationInitilized == false) {
     mSimulationDataGenerator.Initialize( GetSimulationSampleRate(), mSettings.get() );
     mSimulationInitilized = true;
   }
@@ -194,7 +194,9 @@ void CANMolinaroAnalyzer::decodeFrameBit (const bool inBitValue, const U64 inSam
 
 void CANMolinaroAnalyzer::handle_IDLE_state (const bool inBitValue, const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
-  if (!inBitValue) {
+  if (inBitValue) {
+    addMark (inSampleNumber, AnalyzerResults::Stop) ;
+  }else{ // SOF
     mUnstuffingActive = true ;
     mCRC15Accumulator = 0 ;
     mConsecutiveBitCountOfSamePolarity = 1 ;
