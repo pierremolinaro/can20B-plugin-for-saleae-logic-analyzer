@@ -85,7 +85,7 @@ Two settings are available:
 * `Randomly toggle one bit`: in every generated frame, one random bit is inverted.
 
 
-##Capture Display
+### Capture Display
 
 This is the capture of a Standard data frame, identifier `0x40C`, one data byte (`0xF3`), with `ACK SLOT` dominant.
 
