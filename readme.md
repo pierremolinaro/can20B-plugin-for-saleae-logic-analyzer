@@ -97,6 +97,8 @@ By default, the center of a bit is indicated with a dot.
 
 The green dot is the `SOF` (*Start Of Frame*) field.
 
+The orange square is an `IDLE` bit (from release 1.1.0).
+
 A white `X` is a Stuff Bit.
 
 A fixed form bit is denoted by a `0` (for a dominant bit) or a `1` (recessive bit). *Note the level inversion does not change the annotation.* 
