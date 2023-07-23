@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzerResults::CANMolinaroAnalyzerResults (CANMolinaroAnalyzer* analyzer,
                                                         CANMolinaroAnalyzerSettings* settings) :
@@ -15,12 +15,12 @@ mSettings (settings),
 mAnalyzer (analyzer) {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzerResults::~CANMolinaroAnalyzerResults (void) {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
                                                const DisplayBase inDisplayBase,
@@ -106,7 +106,7 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateBubbleText (const U64 inFrameIndex,
                                                      Channel & channel,
@@ -118,7 +118,7 @@ void CANMolinaroAnalyzerResults::GenerateBubbleText (const U64 inFrameIndex,
   AddResultString (text.str().c_str ()) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateFrameTabularText (const U64 inFrameIndex,
                                                            const DisplayBase inDisplayBase) {
@@ -133,7 +133,7 @@ void CANMolinaroAnalyzerResults::GenerateFrameTabularText (const U64 inFrameInde
   #endif
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id )
 {
@@ -167,7 +167,7 @@ void CANMolinaroAnalyzerResults::GenerateExportFile( const char* file, DisplayBa
   file_stream.close();
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 
 void CANMolinaroAnalyzerResults::GeneratePacketTabularText( U64 packet_id, DisplayBase display_base )
@@ -176,11 +176,11 @@ void CANMolinaroAnalyzerResults::GeneratePacketTabularText( U64 packet_id, Displ
 
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerResults::GenerateTransactionTabularText( U64 transaction_id, DisplayBase display_base )
 {
   //not supported
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------

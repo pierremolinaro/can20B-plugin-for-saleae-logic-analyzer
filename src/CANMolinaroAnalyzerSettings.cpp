@@ -1,7 +1,7 @@
 #include "CANMolinaroAnalyzerSettings.h"
 #include <AnalyzerHelpers.h>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzerSettings::CANMolinaroAnalyzerSettings (void) :
 mInputChannel (UNDEFINED_CHANNEL),
@@ -97,12 +97,12 @@ mInverted (false) {
   AddChannel (mInputChannel, "Serial", false) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzerSettings::~CANMolinaroAnalyzerSettings (void) {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANMolinaroAnalyzerSettings::SetSettingsFromInterfaces (void) {
   mInputChannel = mInputChannelInterface->GetChannel () ;
@@ -119,7 +119,7 @@ bool CANMolinaroAnalyzerSettings::SetSettingsFromInterfaces (void) {
   return true ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char * CANMolinaroAnalyzerSettings::SaveSettings (void) {
   SimpleArchive text_archive;
@@ -135,7 +135,7 @@ const char * CANMolinaroAnalyzerSettings::SaveSettings (void) {
   return SetReturnString (text_archive.GetString ()) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   SimpleArchive text_archive;
@@ -162,4 +162,4 @@ void CANMolinaroAnalyzerSettings::LoadSettings (const char* settings) {
   mSimulatorFrameValidityInterface->SetNumber (mGeneratedFrameValidity) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------

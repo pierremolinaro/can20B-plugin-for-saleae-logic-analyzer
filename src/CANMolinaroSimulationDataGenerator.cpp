@@ -1,25 +1,25 @@
 #include "CANMolinaroSimulationDataGenerator.h"
 #include "CANMolinaroAnalyzerSettings.h"
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #include <AnalyzerHelpers.h>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CAN FRAME GENERATOR
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {standardFrame, extendedFrame} FrameFormat ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {dataFrame, remoteFrame} FrameType ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 typedef enum {ACK_SLOT_DOMINANT, ACK_SLOT_RECESSIVE} AckSlot ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANFrameBitsGenerator {
   public : CANFrameBitsGenerator (const uint32_t inIdentifier,
@@ -48,7 +48,7 @@ class CANFrameBitsGenerator {
   private : uint16_t mCRCAccumulator ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANFrameBitsGenerator::CANFrameBitsGenerator (const uint32_t inIdentifier,
                                               const FrameFormat inFrameFormat,
@@ -123,7 +123,7 @@ mCRCAccumulator (0) {
   mFrameLength += 11 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFrameBitsGenerator::enterBitAppendStuff (const bool inBit) {
 //--- Compute CRC
@@ -160,7 +160,7 @@ void CANFrameBitsGenerator::enterBitAppendStuff (const bool inBit) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANFrameBitsGenerator::enterBitNoStuff (const bool inBit) {
 //--- Emit bit
@@ -172,7 +172,7 @@ void CANFrameBitsGenerator::enterBitNoStuff (const bool inBit) {
   mFrameLength ++ ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   bool result = true ; // RECESSIF
@@ -184,9 +184,9 @@ bool CANFrameBitsGenerator::bitAtIndex (const uint32_t inIndex) const {
   return result ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CANMolinaroSimulationDataGenerator
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroSimulationDataGenerator::CANMolinaroSimulationDataGenerator (void) :
 mSettings (nullptr),
@@ -195,13 +195,13 @@ mSeed (0),
 mSerialSimulationData (new SimulationChannelDescriptor ()) {
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroSimulationDataGenerator::~CANMolinaroSimulationDataGenerator (void) {
   delete mSerialSimulationData ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroSimulationDataGenerator::Initialize (const U32 simulation_sample_rate,
                                                      CANMolinaroAnalyzerSettings * settings) {
@@ -213,7 +213,7 @@ void CANMolinaroSimulationDataGenerator::Initialize (const U32 simulation_sample
   mSerialSimulationData->SetInitialBitState (BIT_HIGH) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 largest_sample_requested,
                                                                 const U32 sample_rate,
@@ -243,7 +243,7 @@ U32 CANMolinaroSimulationDataGenerator::GenerateSimulationData (const U64 larges
   return 1 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerBit,
                                                          const bool inInverted) {
@@ -309,4 +309,4 @@ void CANMolinaroSimulationDataGenerator::createCANFrame (const U32 inSamplesPerB
 //  mSerialSimulationData->TransitionIfNeeded (inInverted ? BIT_LOW : BIT_HIGH) ; //we need to end recessive
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------

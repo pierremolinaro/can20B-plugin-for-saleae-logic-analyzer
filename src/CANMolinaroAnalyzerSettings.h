@@ -1,18 +1,18 @@
 #ifndef CANMOLINARO_ANALYZER_SETTINGS
 #define CANMOLINARO_ANALYZER_SETTINGS
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #include <AnalyzerSettings.h>
 #include <AnalyzerTypes.h>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 static const U32 GENERATE_ACK_DOMINANT = 0 ;
 static const U32 GENERATE_ACK_RECESSIVE = 1 ;
 static const U32 GENERATE_ACK_RANDOMLY = 2 ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 static const U32 GENERATE_ALL_FRAME_TYPES = 0 ;
 static const U32 GENERATE_ONLY_STANDARD_DATA = 1 ;
@@ -20,12 +20,12 @@ static const U32 GENERATE_ONLY_EXTENDED_DATA = 2 ;
 static const U32 GENERATE_ONLY_STANDARD_REMOTE = 3 ;
 static const U32 GENERATE_ONLY_EXTENDED_REMOTE = 4 ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 static const U32 GENERATE_VALID_FRAMES = 0 ;
 static const U32 GENERATE_ONE_RANDOM_ERROR_BIT = 1 ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
 
@@ -75,6 +75,6 @@ class CANMolinaroAnalyzerSettings : public AnalyzerSettings {
   protected: bool mInverted ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #endif //CANMOLINARO_ANALYZER_SETTINGS

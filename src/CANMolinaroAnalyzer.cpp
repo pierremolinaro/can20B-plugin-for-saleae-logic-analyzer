@@ -6,9 +6,9 @@
 #include <string>
 #include <sstream>
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //   CANMolinaroAnalyzer
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzer::CANMolinaroAnalyzer () :
 Analyzer2 (),
@@ -18,19 +18,19 @@ mSimulationInitilized (false) {
   UseFrameV2 () ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 CANMolinaroAnalyzer::~CANMolinaroAnalyzer () {
   KillThread () ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANMolinaroAnalyzer::bitRate (void) const {
   return mSettings->mBitRate ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::SetupResults () {
   mResults.reset (new CANMolinaroAnalyzerResults (this, mSettings.get())) ;
@@ -39,13 +39,9 @@ void CANMolinaroAnalyzer::SetupResults () {
 }
 
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::WorkerThread (void) {
-//   mResults.reset (new CANMolinaroAnalyzerResults (this, mSettings.get ())) ;
-//   SetAnalyzerResults (mResults.get ()) ;
-//   mResults->AddChannelBubblesWillAppearOn (mSettings->mInputChannel) ;
-//---
   const bool inverted = mSettings->inverted () ;
   mSampleRateHz = GetSampleRate () ;
   AnalyzerChannelData * serial = GetAnalyzerChannelData (mSettings->mInputChannel) ;
@@ -72,13 +68,13 @@ void CANMolinaroAnalyzer::WorkerThread (void) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 bool CANMolinaroAnalyzer::NeedsRerun () {
   return false;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                  U32 device_sample_rate,
@@ -92,41 +88,42 @@ U32 CANMolinaroAnalyzer::GenerateSimulationData (U64 minimum_sample_index,
                                                           simulation_channels) ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 U32 CANMolinaroAnalyzer::GetMinimumSampleRateHz () {
   return mSettings->mBitRate * 5 ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char* CANMolinaroAnalyzer::GetAnalyzerName () const {
   return "CAN 2.0B (Molinaro)";
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 const char* GetAnalyzerName (void) {
   return "CAN 2.0B (Molinaro)";
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 Analyzer* CreateAnalyzer (void) {
   return new CANMolinaroAnalyzer () ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void DestroyAnalyzer (Analyzer* analyzer) {
   delete analyzer;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 //  CAN FRAME DECODER
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::enterBit (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::enterBit (const bool inBitValue,
+                                    const U64 inSampleNumber) {
   if (!mUnstuffingActive) {
     decodeFrameBit (inBitValue, inSampleNumber) ;
   }else if ((mConsecutiveBitCountOfSamePolarity == 5) && (inBitValue != mPreviousBit)) {
@@ -150,9 +147,10 @@ void CANMolinaroAnalyzer::enterBit (const bool inBitValue, const U64 inSampleNum
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::decodeFrameBit (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::decodeFrameBit (const bool inBitValue,
+                                          const U64 inSampleNumber) {
   switch (mFrameFieldEngineState) {
   case IDLE :
     handle_IDLE_state (inBitValue, inSampleNumber) ;
@@ -190,9 +188,10 @@ void CANMolinaroAnalyzer::decodeFrameBit (const bool inBitValue, const U64 inSam
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_IDLE_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_IDLE_state (const bool inBitValue,
+                                             const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   if (inBitValue) {
     addMark (inSampleNumber, AnalyzerResults::Stop) ;
@@ -212,9 +211,10 @@ void CANMolinaroAnalyzer::handle_IDLE_state (const bool inBitValue, const U64 in
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBitValue,
+                                                   const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   enterBitInCRC15 (inBitValue) ;
   mFieldBitIndex ++ ;
@@ -242,9 +242,10 @@ void CANMolinaroAnalyzer::handle_IDENTIFIER_state (const bool inBitValue, const 
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_EXTENDED_IDF_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_EXTENDED_IDF_state (const bool inBitValue,
+                                                     const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   enterBitInCRC15 (inBitValue) ;
   mFieldBitIndex ++ ;
@@ -271,9 +272,10 @@ void CANMolinaroAnalyzer::handle_EXTENDED_IDF_state (const bool inBitValue, cons
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_CONTROL_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_CONTROL_state (const bool inBitValue,
+                                                const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   enterBitInCRC15 (inBitValue) ;
   mFieldBitIndex ++ ;
@@ -301,9 +303,10 @@ void CANMolinaroAnalyzer::handle_CONTROL_state (const bool inBitValue, const U64
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_DATA_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_DATA_state (const bool inBitValue,
+                                             const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   enterBitInCRC15 (inBitValue) ;
   addMark (inSampleNumber, AnalyzerResults::Dot);
@@ -321,9 +324,10 @@ void CANMolinaroAnalyzer::handle_DATA_state (const bool inBitValue, const U64 in
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_CRC15_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_CRC15_state (const bool inBitValue,
+                                              const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   enterBitInCRC15 (inBitValue) ;
   addMark (inSampleNumber, AnalyzerResults::Dot);
@@ -338,9 +342,10 @@ void CANMolinaroAnalyzer::handle_CRC15_state (const bool inBitValue, const U64 i
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBitValue,
+                                               const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   mUnstuffingActive = false ;
   if (inBitValue) {
@@ -352,9 +357,10 @@ void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBitValue, const U64 
   mFrameFieldEngineState = ACK ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_ACK_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_ACK_state (const bool inBitValue,
+                                            const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
@@ -372,9 +378,10 @@ void CANMolinaroAnalyzer::handle_ACK_state (const bool inBitValue, const U64 inS
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBitValue,
+                                                   const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   if (inBitValue) {
     addMark (inSampleNumber, AnalyzerResults::One) ;
@@ -389,9 +396,10 @@ void CANMolinaroAnalyzer::handle_ENDOFFRAME_state (const bool inBitValue, const 
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBitValue,
+                                                     const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   if (inBitValue) {
     addMark (inSampleNumber, AnalyzerResults::One) ;
@@ -410,9 +418,10 @@ void CANMolinaroAnalyzer::handle_INTERMISSION_state (const bool inBitValue, cons
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBitValue, const U64 inSampleNumber) {
+void CANMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBitValue,
+                                                      const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
   mUnstuffingActive = false ;
   addMark (inSampleNumber, AnalyzerResults::ErrorDot);
@@ -428,7 +437,7 @@ void CANMolinaroAnalyzer::handle_DECODER_ERROR_state (const bool inBitValue, con
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::enterBitInCRC15 (const bool inBitValue) {
   const bool bit14 = (mCRC15Accumulator & (1 << 14)) != 0 ;
@@ -440,14 +449,14 @@ void CANMolinaroAnalyzer::enterBitInCRC15 (const bool inBitValue) {
   }
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::addMark (const U64 inSampleNumber,
                                    const AnalyzerResults::MarkerType inMarker) {
   mResults->AddMarker (inSampleNumber, inMarker, mSettings->mInputChannel);
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
                                      const U64 inData1,
@@ -529,7 +538,7 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
   mStartOfFieldSampleNumber = inEndSampleNumber ;
 }
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 void CANMolinaroAnalyzer::enterInErrorMode (const U64 inSampleNumber) {
   mStartOfFieldSampleNumber = inSampleNumber ;
@@ -537,5 +546,4 @@ void CANMolinaroAnalyzer::enterInErrorMode (const U64 inSampleNumber) {
   mUnstuffingActive = false ;
 }
 
-//--------------------------------------------------------------------------------------------------
-
+//----------------------------------------------------------------------------------------

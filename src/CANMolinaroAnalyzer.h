@@ -1,17 +1,17 @@
 #ifndef CANMOLINARO_ANALYZER_H
 #define CANMOLINARO_ANALYZER_H
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #include <Analyzer.h>
 #include "CANMolinaroAnalyzerResults.h"
 #include "CANMolinaroSimulationDataGenerator.h"
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class CANMolinaroAnalyzerSettings;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
 
@@ -96,12 +96,12 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
   private: void handle_DECODER_ERROR_state (const bool inBit, const U64 inSampleNumber) ;
 } ;
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 extern "C" ANALYZER_EXPORT const char* __cdecl GetAnalyzerName();
 extern "C" ANALYZER_EXPORT Analyzer* __cdecl CreateAnalyzer( );
 extern "C" ANALYZER_EXPORT void __cdecl DestroyAnalyzer( Analyzer* analyzer );
 
-//--------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------
 
 #endif //CANMOLINARO_ANALYZER_H
