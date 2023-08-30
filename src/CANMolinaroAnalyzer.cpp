@@ -97,13 +97,13 @@ U32 CANMolinaroAnalyzer::GetMinimumSampleRateHz () {
 //----------------------------------------------------------------------------------------
 
 const char* CANMolinaroAnalyzer::GetAnalyzerName () const {
-  return "CAN 2.0B (Molinaro)";
+  return "CAN 2.0B (Molinaro) - v2";
 }
 
 //----------------------------------------------------------------------------------------
 
 const char* GetAnalyzerName (void) {
-  return "CAN 2.0B (Molinaro)";
+  return "CAN 2.0B (Molinaro) - v2";
 }
 
 //----------------------------------------------------------------------------------------
@@ -362,11 +362,14 @@ void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBitValue,
 void CANMolinaroAnalyzer::handle_ACK_state (const bool inBitValue,
                                             const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
+  static U8 u8Acked = 0;
+  
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
     addMark (inSampleNumber, inBitValue ? AnalyzerResults::ErrorSquare : AnalyzerResults::DownArrow);
+	u8Acked = inBitValue;
   }else{ // ACK DELIMITER
-    addBubble (ACK_FIELD_RESULT, 0, 0, inSampleNumber + samplesPerBit / 2) ;
+    addBubble (ACK_FIELD_RESULT, u8Acked, 0, inSampleNumber + samplesPerBit / 2) ;
     mFrameFieldEngineState = END_OF_FRAME ;
     if (inBitValue) {
       addMark (inSampleNumber, AnalyzerResults::One) ;
@@ -505,6 +508,7 @@ void CANMolinaroAnalyzer::addBubble (const U8 inBubbleType,
     }
     break ;
   case ACK_FIELD_RESULT :
+	frameV2.AddByte("Value", inData1);
     mResults->AddFrameV2 (frameV2, "ACK", mStartOfFieldSampleNumber, inEndSampleNumber) ;
     break ;
   case EOF_FIELD_RESULT :
