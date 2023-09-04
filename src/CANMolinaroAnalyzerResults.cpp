@@ -80,7 +80,12 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     break ;
   case ACK_FIELD_RESULT :
     if (inBubbleText) {
-      ioText << "ACK\n" ;
+		if(inFrame.mData1){
+			ioText << "NAK\n" ;
+		}
+		else{
+			ioText << "ACK\n" ;
+		}
     }
     break ;
   case EOF_FIELD_RESULT :
