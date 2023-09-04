@@ -41,7 +41,8 @@ class ANALYZER_EXPORT CANMolinaroAnalyzer : public Analyzer2 {
   protected: std::unique_ptr < CANMolinaroAnalyzerResults > mResults;
 
   protected: CANMolinaroSimulationDataGenerator mSimulationDataGenerator;
-  protected: bool mSimulationInitilized;
+  protected: bool mSimulationInitilized ;
+  protected: bool mAcked ;
 
   //Serial analysis vars:
   protected: U32 mSampleRateHz;

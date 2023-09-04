@@ -362,13 +362,12 @@ void CANMolinaroAnalyzer::handle_CRCDEL_state (const bool inBitValue,
 void CANMolinaroAnalyzer::handle_ACK_state (const bool inBitValue,
                                             const U64 inSampleNumber) {
   const U32 samplesPerBit = mSampleRateHz / mSettings->mBitRate ;
-  U8 u8Acked = 0;
   mFieldBitIndex ++ ;
   if (mFieldBitIndex == 1) { // ACK SLOT
     addMark (inSampleNumber, inBitValue ? AnalyzerResults::ErrorSquare : AnalyzerResults::DownArrow);
-    u8Acked = inBitValue;
+    mAcked = inBitValue;
   }else{ // ACK DELIMITER
-    addBubble (ACK_FIELD_RESULT, u8Acked, 0, inSampleNumber + samplesPerBit / 2) ;
+    addBubble (ACK_FIELD_RESULT, mAcked, 0, inSampleNumber + samplesPerBit / 2) ;
     mFrameFieldEngineState = END_OF_FRAME ;
     if (inBitValue) {
       addMark (inSampleNumber, AnalyzerResults::One) ;
