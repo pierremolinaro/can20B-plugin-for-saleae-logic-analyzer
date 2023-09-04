@@ -80,12 +80,11 @@ void CANMolinaroAnalyzerResults::GenerateText (const Frame & inFrame,
     break ;
   case ACK_FIELD_RESULT :
     if (inBubbleText) {
-		if(inFrame.mData1){
-			ioText << "NAK\n" ;
-		}
-		else{
-			ioText << "ACK\n" ;
-		}
+      if (inFrame.mData1 != 0) {
+        ioText << "NAK\n" ;
+      }else{
+        ioText << "ACK\n" ;
+      }
     }
     break ;
   case EOF_FIELD_RESULT :
@@ -140,7 +139,9 @@ void CANMolinaroAnalyzerResults::GenerateFrameTabularText (const U64 inFrameInde
 
 //----------------------------------------------------------------------------------------
 
-void CANMolinaroAnalyzerResults::GenerateExportFile( const char* file, DisplayBase display_base, U32 export_type_user_id )
+void CANMolinaroAnalyzerResults::GenerateExportFile (const char* file,
+                                                     DisplayBase display_base,
+                                                     U32 export_type_user_id )
 {
   std::ofstream file_stream( file, std::ios::out );
 
