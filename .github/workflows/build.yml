@@ -31,7 +31,7 @@ jobs:
         cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
         cmake --build ${{github.workspace}}/build
     - name: Upload MacOS build
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4.1.7
       with:
         name: macos-x86
         path: ${{github.workspace}}/build/Analyzers/*.so
